@@ -1,4 +1,7 @@
 package com.extratoPopular.domain.exception;
 
 public class UsuarioNaoAutenticadoException extends RuntimeException {
+    public UsuarioNaoAutenticadoException(String message) {
+        super(message);
+    }
 }
