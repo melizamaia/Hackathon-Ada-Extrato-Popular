@@ -36,6 +36,6 @@ public class RegisterUserUseCase {
         user = userRepository.save(user);
 
         String token = jwtService.generateToken(user.getId());
-        return new AuthResponse(token);
+        return new AuthResponse(token, user.getId(), user.getEmail());
     }
 }
