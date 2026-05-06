@@ -13,10 +13,13 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import com.extratoPopular.application.usecase.GetUserProfileUseCase;
+import com.extratoPopular.interfaces.dto.UserProfileResponse;
 
 @RestController
 @RequestMapping("/auth")
@@ -25,10 +28,12 @@ public class AuthController {
 
     private final RegisterUserUseCase registerUserUseCase;
     private final LoginUserUseCase loginUserUseCase;
+    private final GetUserProfileUseCase getUserProfileUseCase;
 
-    public AuthController(RegisterUserUseCase registerUserUseCase, LoginUserUseCase loginUserUseCase) {
+    public AuthController(RegisterUserUseCase registerUserUseCase, LoginUserUseCase loginUserUseCase, GetUserProfileUseCase getUserProfileUseCase) {
         this.registerUserUseCase = registerUserUseCase;
         this.loginUserUseCase = loginUserUseCase;
+        this.getUserProfileUseCase = getUserProfileUseCase;
     }
 
     @Operation(summary = "Registrar novo usuário")
@@ -52,6 +57,17 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
         AuthResponse response = loginUserUseCase.execute(request);
+        return ResponseEntity.ok(response);
+    }
+
+    @Operation(summary = "Obter perfil do usuário logado")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Perfil recuperado com sucesso"),
+            @ApiResponse(responseCode = "401", description = "Não autorizado (Token ausente ou inválido)", content = @Content)
+    })
+    @GetMapping("/me")
+    public ResponseEntity<UserProfileResponse> me() {
+        UserProfileResponse response = getUserProfileUseCase.execute();
         return ResponseEntity.ok(response);
     }
 }
