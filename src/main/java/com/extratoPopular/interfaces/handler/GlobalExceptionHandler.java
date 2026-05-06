@@ -4,6 +4,8 @@ import com.extratoPopular.domain.exception.ArquivoVazioException;
 import com.extratoPopular.domain.exception.CredenciaisInvalidasException;
 import com.extratoPopular.domain.exception.EmailJaCadastradoException;
 import com.extratoPopular.domain.exception.FormatoArquivoInvalidoException;
+import com.extratoPopular.domain.exception.OrcamentoDuplicadoException;
+import com.extratoPopular.domain.exception.OrcamentoNaoEncontradoException;
 import com.extratoPopular.domain.exception.TransacaoDuplicadaException;
 import com.extratoPopular.domain.exception.UsuarioNaoAutenticadoException;
 import com.extratoPopular.interfaces.dto.ErrorResponse;
@@ -71,6 +73,18 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.CONFLICT)
     public ErrorResponse handleTransacaoDuplicadaException(TransacaoDuplicadaException ex) {
         return new ErrorResponse("TRANSACAO_DUPLICADA", null);
+    }
+
+    @ExceptionHandler(OrcamentoNaoEncontradoException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ErrorResponse handleOrcamentoNaoEncontradoException(OrcamentoNaoEncontradoException ex) {
+        return new ErrorResponse("ORCAMENTO_NAO_ENCONTRADO", null);
+    }
+
+    @ExceptionHandler(OrcamentoDuplicadoException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ErrorResponse handleOrcamentoDuplicadoException(OrcamentoDuplicadoException ex) {
+        return new ErrorResponse("ORCAMENTO_DUPLICADO", List.of(ex.getMessage()));
     }
 
     @ExceptionHandler(Exception.class)
