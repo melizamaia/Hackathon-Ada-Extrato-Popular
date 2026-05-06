@@ -1,6 +1,6 @@
 # Extrato Popular
 
-API REST de análise financeira com IA para as classes C e D. Permite ingestão de transações via CSV/OFX, categorização automática por palavras-chave e consulta ao extrato consolidado. Desenvolvido em Java 21 + Spring Boot 3.3 seguindo Clean Architecture.
+API REST de análise financeira para as classes C e D. Permite ingestão de transações via CSV/OFX, categorização automática, controle de orçamento por categoria com alertas e algoritmo de otimização financeira. Desenvolvido em Java 21 + Spring Boot 3.3 seguindo Clean Architecture.
 
 ## Tecnologias
 
@@ -18,10 +18,23 @@ API REST de análise financeira com IA para as classes C e D. Permite ingestão 
 | Autenticação | `POST /auth/login` | Login, retorna JWT |
 | Autenticação | `GET /auth/me` | Perfil do usuário autenticado |
 | Ingestão | `POST /transacoes/bulk` | Upload em lote (CSV ou OFX/QFX) |
+| Resumo | `GET /transacoes/resumo` | Resumo financeiro mensal com alertas de orçamento |
+| Insights | `GET /transacoes/insights` | Top categorias, % renda comprometida, média por transação |
+| Orçamentos | `POST /orcamentos` | Criar orçamento por categoria/mês/ano |
+| Orçamentos | `GET /orcamentos` | Listar orçamentos do mês |
+| Orçamentos | `PUT /orcamentos/{id}` | Atualizar orçamento |
+| Orçamentos | `DELETE /orcamentos/{id}` | Remover orçamento |
+| Otimização | `GET /orcamentos/otimizacao` | Sugestões de redução de gastos |
 
 ## Rodando localmente
 
 **Pré-requisitos:** Java 21, Maven 3.x
+
+> Se o seu `java -version` mostrar outra versão, defina o JAVA_HOME antes de rodar:
+
+```bash
+export JAVA_HOME=$(/usr/libexec/java_home -v 21)
+```
 
 ```bash
 # clonar
@@ -29,7 +42,7 @@ git clone https://github.com/melizamaia/Hackathon-Ada-Extrato-Popular.git
 cd Hackathon-Ada-Extrato-Popular
 
 # rodar (usa H2 in-memory, sem setup de banco)
-./mvnw spring-boot:run
+mvn spring-boot:run
 ```
 
 Acesse a documentação interativa em `http://localhost:8080/swagger-ui.html`.
@@ -51,14 +64,7 @@ Para usar PostgreSQL em produção, descomente o bloco comentado no `application
 ## Executando os testes
 
 ```bash
-# todos os testes
-./mvnw test
-
-# classe específica
-./mvnw test -Dtest=TransacaoControllerIntegrationTest
-
-# método específico
-./mvnw test -Dtest=HashServiceTest#deve_retornarHash_com64Caracteres
+mvn test
 ```
 
 ## Ingestão de transações
@@ -75,29 +81,41 @@ data,valor,descricao
 
 - Separador: `,` ou `;`
 - Data: `yyyy-MM-dd` ou `dd/MM/yyyy`
+- Valores negativos = débito · positivos = crédito
 - Linhas em branco e comentários (`#`) são ignorados
+- Deduplicação automática por hash SHA-256 de `data + valor + descrição`
 
-**Resposta:**
+## Orçamentos e alertas
 
-```json
+Defina um limite de gasto por categoria e mês:
+
+```bash
+POST /orcamentos
 {
-  "importadas": 2,
-  "duplicatas": 0,
-  "erros": 0,
-  "transacoes": [
-    {
-      "id": 1,
-      "data": "2024-06-01",
-      "valor": -150.00,
-      "descricao": "IFOOD RESTAURANTE",
-      "categoria": "ALIMENTACAO",
-      "tipo": "DEBITO"
-    }
-  ]
+  "categoria": "ALIMENTACAO",
+  "valorLimite": 800.00,
+  "mes": 5,
+  "ano": 2026
 }
 ```
 
-A deduplicação é feita por hash SHA-256 de `data + valor + descrição`. O mesmo arquivo pode ser enviado mais de uma vez sem gerar duplicatas.
+O `GET /transacoes/resumo?mes=5&ano=2026` retorna automaticamente os alertas:
+
+| Percentual atingido | Nível | Descrição |
+|---------------------|-------|-----------|
+| ≥ 70% | `INFO` | Alerta informativo |
+| ≥ 90% | `AVISO` | Aproximando do limite |
+| ≥ 100% | `CRITICO` | Orçamento estourado |
+
+## Otimização financeira
+
+`GET /orcamentos/otimizacao?mes=5&ano=2026` analisa os gastos do mês e retorna:
+
+- Categorias com orçamento estourado e valor do excesso
+- Sugestão de redução por categoria
+- Categorias com gastos mas sem orçamento definido
+- Percentual da renda mensal comprometida
+- Recomendação geral
 
 ## Categorias automáticas
 
@@ -118,19 +136,19 @@ A deduplicação é feita por hash SHA-256 de `data + valor + descrição`. O me
 ```
 src/main/java/com/extratoPopular/
 ├── domain/
-│   ├── model/          # Entidades JPA (User, Transacao)
-│   ├── enums/          # Categoria, TipoTransacao, FonteImportacao
+│   ├── model/          # Entidades JPA (User, Transacao, Orcamento)
+│   ├── enums/          # Categoria, TipoTransacao, FonteImportacao, NivelAlerta
 │   └── exception/      # Exceções de domínio
 ├── application/
-│   ├── usecase/        # Casos de uso (Register, Login, Ingestao...)
+│   ├── usecase/        # Casos de uso (Register, Login, Ingestao, Resumo, Insights, Orcamento, Otimizacao)
 │   ├── service/        # HashService, CategorizacaoService
 │   └── dto/            # TransacaoRaw, ParseResult
 ├── infrastructure/
 │   ├── parser/         # CsvParser, OfxParser
-│   ├── persistence/    # Repositories
+│   ├── persistence/    # TransacaoRepository, UserRepository, OrcamentoRepository
 │   └── security/       # JWT, filtros, SecurityConfig
 └── interfaces/
-    ├── controller/     # AuthController, TransacaoController
+    ├── controller/     # AuthController, TransacaoController, OrcamentoController
     ├── dto/            # Requests e Responses HTTP
     └── handler/        # GlobalExceptionHandler
 ```
@@ -146,4 +164,6 @@ src/main/java/com/extratoPopular/
 | `NAO_AUTENTICADO` | 401 | Token ausente ou expirado |
 | `EMAIL_JA_CADASTRADO` | 409 | E-mail já em uso |
 | `TRANSACAO_DUPLICADA` | 409 | Hash já existe para o usuário |
+| `ORCAMENTO_DUPLICADO` | 409 | Já existe orçamento para esta categoria/mês/ano |
+| `ORCAMENTO_NAO_ENCONTRADO` | 404 | Orçamento não encontrado |
 | `ERRO_INTERNO` | 500 | Erro inesperado no servidor |
