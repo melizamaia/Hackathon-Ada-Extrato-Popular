@@ -1,7 +1,10 @@
 package com.extratoPopular.interfaces.handler;
 
+import com.extratoPopular.domain.exception.ArquivoVazioException;
 import com.extratoPopular.domain.exception.CredenciaisInvalidasException;
 import com.extratoPopular.domain.exception.EmailJaCadastradoException;
+import com.extratoPopular.domain.exception.FormatoArquivoInvalidoException;
+import com.extratoPopular.domain.exception.TransacaoDuplicadaException;
 import com.extratoPopular.domain.exception.UsuarioNaoAutenticadoException;
 import com.extratoPopular.interfaces.dto.ErrorResponse;
 import org.springframework.http.HttpStatus;
@@ -50,6 +53,24 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
     public ErrorResponse handleUsuarioNaoAutenticadoException(UsuarioNaoAutenticadoException ex) {
         return new ErrorResponse("NAO_AUTENTICADO", null);
+    }
+
+    @ExceptionHandler(FormatoArquivoInvalidoException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorResponse handleFormatoArquivoInvalidoException(FormatoArquivoInvalidoException ex) {
+        return new ErrorResponse("FORMATO_INVALIDO", null);
+    }
+
+    @ExceptionHandler(ArquivoVazioException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorResponse handleArquivoVazioException(ArquivoVazioException ex) {
+        return new ErrorResponse("ARQUIVO_VAZIO", null);
+    }
+
+    @ExceptionHandler(TransacaoDuplicadaException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ErrorResponse handleTransacaoDuplicadaException(TransacaoDuplicadaException ex) {
+        return new ErrorResponse("TRANSACAO_DUPLICADA", null);
     }
 
     @ExceptionHandler(Exception.class)
