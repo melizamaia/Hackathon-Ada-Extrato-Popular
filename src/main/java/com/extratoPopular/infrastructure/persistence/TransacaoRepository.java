@@ -16,4 +16,5 @@ public interface TransacaoRepository extends JpaRepository<Transacao, Long> {
     List<Transacao> findAllByUserId(Long userId);
 
     List<Transacao> findAllByUserIdAndDataBetween(Long userId, LocalDate dataInicio, LocalDate dataFim);
+
 }
