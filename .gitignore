@@ -1,6 +1,6 @@
 target/
 *.class
-.mvn/
+.mvn/repository/
 .idea/
 .vscode/
 *.sh
