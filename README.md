@@ -27,6 +27,7 @@ O **Extrato Popular** transforma qualquer extrato bancário (CSV ou OFX) em um p
 | Persistência | Spring Data JPA + H2 (dev) + PostgreSQL (produção) |
 | Documentação | SpringDoc OpenAPI 2 (Swagger UI) |
 | Testes | JUnit 5 + Mockito + MockMvc |
+| IA / RAG | Spring AI + OpenAI API |
 | Build | Maven (Maven Wrapper incluso) |
 
 ---
@@ -51,6 +52,12 @@ O **Extrato Popular** transforma qualquer extrato bancário (CSV ou OFX) em um p
 - **Orçamentos**: limite de gasto por categoria/mês/ano com CRUD completo
 - **Alertas automáticos** integrados ao resumo: INFO (≥ 70%), AVISO (≥ 90%), CRÍTICO (≥ 100%)
 - **Otimização financeira**: análise de excessos, sugestão de redução por categoria e recomendação geral
+
+### Inteligência Artificial (Pipeline RAG)
+- **Chat financeiro** (`POST /chat`): assistente inteligente que responde perguntas sobre os próprios gastos do usuário em linguagem natural
+- **Relatório IA** (`GET /relatorio`): relatório financeiro personalizado gerado automaticamente pela IA com base no histórico de transações
+- **Pipeline RAG**: as transações do usuário são injetadas no contexto antes de cada chamada à IA, garantindo respostas precisas e personalizadas
+- Integração com **OpenAI** via **Spring AI**
 
 ---
 
@@ -334,6 +341,41 @@ Retorna `204 No Content`.
 
 ---
 
+### Inteligência Artificial
+
+#### `POST /chat` — Chat com assistente financeiro `🔒`
+
+O assistente recebe a pergunta e responde com base nas transações reais do usuário (pipeline RAG).
+
+**Request:**
+```json
+{
+  "pergunta": "Quanto gastei com alimentação esse mês e o que posso cortar?"
+}
+```
+
+**Response `200 OK`:**
+```json
+{
+  "resposta": "No mês de maio você gastou R$ 450,00 com alimentação, acima do seu orçamento de R$ 400,00. Os maiores gastos foram com iFood (R$ 210,00) e supermercado (R$ 180,00). Uma sugestão é reduzir os pedidos por aplicativo para no máximo 3 vezes por semana."
+}
+```
+
+---
+
+#### `GET /relatorio` — Relatório financeiro gerado por IA `🔒`
+
+Gera um relatório textual completo e personalizado com base em todo o histórico de transações do usuário.
+
+**Response `200 OK`:**
+```json
+{
+  "relatorio": "Relatório Financeiro — Maria Silva\n\nSeu saldo do mês foi positivo em R$ 2.260,00. O maior gasto foi em Alimentação (36% do total de despesas). Você estourou o orçamento de Alimentação em R$ 50,00 e ainda não definiu limites para Lazer. Recomenda-se criar um orçamento de no máximo R$ 200,00 para essa categoria. No geral, sua saúde financeira está estável."
+}
+```
+
+---
+
 ### Alertas de orçamento
 
 | Nível | Percentual atingido | Significado |
@@ -404,16 +446,20 @@ src/main/java/com/extratoPopular/
 │   │   ├── InsightsTransacoesUseCase
 │   │   ├── OrcamentoUseCase
 │   │   └── OtimizacaoUseCase
-│   ├── service/                   # HashService (SHA-256), CategorizacaoService
+│   ├── service/                   # HashService, CategorizacaoService, ChatService, RelatorioService
+│   ├── rag/                       # TransacaoContextBuilder, ContextoFinanceiroService
+│   │   └── PromptFinanceiroService, PromptRelatorioService
 │   └── dto/                       # TransacaoRaw, ParseResult
 │
 ├── infrastructure/                # Implementações Spring e integrações externas
+│   ├── ai/                        # OpenAiClient (integração com a API da OpenAI)
 │   ├── parser/                    # CsvParser, OfxParser
 │   ├── persistence/               # UserRepository, TransacaoRepository, OrcamentoRepository
 │   └── security/                  # JwtService, JwtAuthenticationFilter, SecurityConfig
 │
 └── interfaces/                    # Camada HTTP
     ├── controller/                # AuthController, TransacaoController, OrcamentoController
+    │                              # ChatController, RelatorioController
     ├── dto/                       # Records de request e response HTTP
     └── handler/                   # GlobalExceptionHandler
 ```
@@ -444,11 +490,12 @@ src/main/java/com/extratoPopular/
 
 Projeto desenvolvido durante o **Hackathon Ada Tech**, com foco em impacto social para o público das classes C e D.
 
-| Nome | GitHub |
-|------|--------|
-| Meliza Maia | [@melizamaia](https://github.com/melizamaia) |
-| Joyce | [@joycejsm](https://github.com/joycejsm) |
-| Yasmine Oenning | [@ysmneonng](https://github.com/ysmneonng) |
+| Nome | Responsabilidade | GitHub |
+|------|-----------------|--------|
+| Joyce Silva | Autenticação e Segurança (JWT) | [@joycejsm](https://github.com/joycejsm) |
+| Meliza Maia | Ingestão de Dados e Parsers CSV/OFX | [@melizamaia](https://github.com/melizamaia) |
+| Mellyssa Mendes | Pipeline RAG e IA | [@mellyssamnds](https://github.com/mellyssamnds) |
+| Yasmine Oenning | Motor Financeiro e Algoritmos | [@ysmneonng](https://github.com/ysmneonng) |
 
 ---
 
