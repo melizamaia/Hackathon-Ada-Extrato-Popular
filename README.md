@@ -27,8 +27,8 @@ O **Extrato Popular** transforma qualquer extrato bancário (CSV ou OFX) em um p
 | Persistência | Spring Data JPA + H2 (dev) + PostgreSQL (produção) |
 | Documentação | SpringDoc OpenAPI 2 (Swagger UI) |
 | Testes | JUnit 5 + Mockito + MockMvc |
-| IA / RAG | Spring AI + OpenAI API |
-| Build | Maven (Maven Wrapper incluso) |
+| IA / RAG | OpenAI API (via RestClient) |
+| Build | Maven 3.x |
 
 ---
 
@@ -57,13 +57,13 @@ O **Extrato Popular** transforma qualquer extrato bancário (CSV ou OFX) em um p
 - **Chat financeiro** (`POST /chat`): assistente inteligente que responde perguntas sobre os próprios gastos do usuário em linguagem natural
 - **Relatório IA** (`GET /relatorio`): relatório financeiro personalizado gerado automaticamente pela IA com base no histórico de transações
 - **Pipeline RAG**: as transações do usuário são injetadas no contexto antes de cada chamada à IA, garantindo respostas precisas e personalizadas
-- Integração com **OpenAI** via **Spring AI**
+- Integração com **OpenAI API** (gpt-4o-mini) via `RestClient`
 
 ---
 
 ## Como rodar localmente
 
-**Pré-requisitos:** Java 21 e Maven 3.x (ou use o Maven Wrapper incluso).
+**Pré-requisitos:** Java 21 e Maven 3.x instalado.
 
 ```bash
 # 1. Clonar o repositório
@@ -71,10 +71,10 @@ git clone https://github.com/melizamaia/Hackathon-Ada-Extrato-Popular.git
 cd Hackathon-Ada-Extrato-Popular
 
 # 2. Rodar (H2 in-memory, sem necessidade de banco externo)
-./mvnw spring-boot:run
+mvn spring-boot:run
 
 # 3. Executar os testes
-./mvnw test
+mvn test
 ```
 
 A aplicação sobe na porta **8080**.
@@ -86,11 +86,12 @@ A aplicação sobe na porta **8080**.
 
 > **H2 Console:** JDBC URL `jdbc:h2:mem:extratodb` · Usuário: `sa` · Senha: *(vazia)*
 
-### Variáveis de ambiente (opcionais)
+### Variáveis de ambiente
 
 | Variável | Padrão | Descrição |
 |----------|--------|-----------|
-| `JWT_SECRET` | valor de exemplo | Segredo Base64 para assinar o JWT |
+| `OPENAI_API_KEY` | `chave-nao-configurada` | Chave da API OpenAI (obrigatória para chat e relatório) |
+| `JWT_SECRET` | valor Base64 de exemplo | Segredo Base64 para assinar o JWT |
 | `JWT_EXPIRATION` | `3600000` | Expiração do token em ms (1 hora) |
 
 Para usar PostgreSQL em produção, descomente o bloco correspondente em `src/main/resources/application.properties` e ajuste as credenciais.
@@ -233,11 +234,11 @@ data,valor,descricao
   "alertas": [
     {
       "categoria": "ALIMENTACAO",
-      "nivel": "AVISO",
+      "nivel": "CRITICO",
       "valorLimite": 400.00,
       "valorGasto": 450.00,
-      "percentual": 112.5,
-      "mensagem": "Orçamento estourado em R$ 50,00"
+      "percentual": 112.50,
+      "mensagem": "Orçamento de ALIMENTACAO estourou! 112.50% utilizado (R$ 450.00 de R$ 400.00)"
     }
   ]
 }
@@ -330,12 +331,12 @@ Retorna `204 No Content`.
       "valorOrcamento": 400.00,
       "valorGasto": 450.00,
       "excesso": 50.00,
-      "sugestao": "Reduza gastos com ALIMENTACAO em R$ 50,00 para ficar dentro do orçamento."
+      "sugestao": "Reduza R$ 50.00 em ALIMENTACAO para ficar dentro do orçamento"
     }
   ],
   "categoriasSeemOrcamento": ["LAZER"],
   "economiasPotenciais": 50.00,
-  "recomendacaoGeral": "Você está comprometendo 35% da sua renda. Defina orçamentos para as categorias sem limite."
+  "recomendacaoGeral": "Você tem 1 categoria(s) acima do orçamento. Economias potenciais de R$ 50.00 se os limites fossem respeitados."
 }
 ```
 
@@ -446,16 +447,19 @@ src/main/java/com/extratoPopular/
 │   │   ├── InsightsTransacoesUseCase
 │   │   ├── OrcamentoUseCase
 │   │   └── OtimizacaoUseCase
-│   ├── service/                   # HashService, CategorizacaoService, ChatService, RelatorioService
-│   ├── rag/                       # TransacaoContextBuilder, ContextoFinanceiroService
-│   │   └── PromptFinanceiroService, PromptRelatorioService
+│   ├── service/                   # HashService, CategorizacaoService
+│   │   ├── ChatService            # Orquestra RAG + OpenAI para o chat
+│   │   ├── RelatorioService       # Orquestra RAG + OpenAI para o relatório
+│   │   └── rag/                   # ContextoFinanceiroService, PromptFinanceiroService,
+│   │                              # PromptRelatorioService
 │   └── dto/                       # TransacaoRaw, ParseResult
 │
 ├── infrastructure/                # Implementações Spring e integrações externas
-│   ├── ai/                        # OpenAiClient (integração com a API da OpenAI)
+│   ├── ai/                        # OpenAiClient (integração com a API da OpenAI via RestClient)
 │   ├── parser/                    # CsvParser, OfxParser
 │   ├── persistence/               # UserRepository, TransacaoRepository, OrcamentoRepository
-│   └── security/                  # JwtService, JwtAuthenticationFilter, SecurityConfig
+│   ├── security/                  # JwtService, JwtAuthenticationFilter, SecurityConfig, SecurityUtils
+│   └── config/                    # SwaggerConfig
 │
 └── interfaces/                    # Camada HTTP
     ├── controller/                # AuthController, TransacaoController, OrcamentoController
@@ -470,19 +474,36 @@ src/main/java/com/extratoPopular/
 
 ```bash
 # Todos os testes
-./mvnw test
+mvn test
 
 # Uma classe específica
-./mvnw test -Dtest=AuthControllerIntegrationTest
+mvn test -Dtest=AuthControllerIntegrationTest
 
 # Um método específico
-./mvnw test -Dtest=AuthControllerIntegrationTest#deve_retornar201_quando_registrarComDadosValidos
+mvn test -Dtest=AuthControllerIntegrationTest#deve_retornar201_quando_registrarComDadosValidos
 ```
 
-| Tipo | Cobertura |
-|------|-----------|
-| Testes unitários | `RegisterUserUseCase`, `LoginUserUseCase`, `IngestaoTransacoesUseCase`, `HashService`, `CategorizacaoService`, `CsvParser`, `OfxParser` |
-| Testes de integração | Fluxo completo de autenticação e importação de transações com H2 + MockMvc |
+**190 testes · 0 falhas · BUILD SUCCESS**
+
+| Classe de teste | Testes | Tipo |
+|----------------|--------|------|
+| `CategorizacaoServiceTest` | 52 | Unitário |
+| `CsvParserTest` | 16 | Unitário |
+| `OrcamentoControllerIntegrationTest` | 13 | Integração |
+| `IngestaoTransacoesUseCaseTest` | 12 | Unitário |
+| `OrcamentoUseCaseTest` | 11 | Unitário |
+| `ResumoTransacoesUseCaseTest` | 11 | Unitário |
+| `OtimizacaoUseCaseTest` | 10 | Unitário |
+| `OfxParserTest` | 15 | Unitário |
+| `AnaliseFinanceiraControllerIntegrationTest` | 9 | Integração |
+| `AuthControllerIntegrationTest` | 8 | Integração |
+| `HashServiceTest` | 6 | Unitário |
+| `TransacaoControllerIntegrationTest` | 6 | Integração |
+| `ChatRelatorioControllerIntegrationTest` | 6 | Integração |
+| `ChatServiceTest` | 5 | Unitário |
+| `RelatorioServiceTest` | 5 | Unitário |
+| `LoginUserUseCaseTest` | 3 | Unitário |
+| `RegisterUserUseCaseTest` | 2 | Unitário |
 
 ---
 
