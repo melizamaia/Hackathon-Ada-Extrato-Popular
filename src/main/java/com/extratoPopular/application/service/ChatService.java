@@ -26,22 +26,15 @@ public class ChatService {
 
     public ChatResponse conversar(ChatRequest request) {
 
-        System.out.println(">>> ENTROU NO CHAT SERVICE");
-        try {
-            String contexto = contextoService.gerarContextoFinanceiro();
+        String contexto = contextoService.gerarContextoFinanceiro();
 
-            String prompt = promptService.construirPrompt(
-                    contexto,
-                    request.pergunta()
-            );
+        String prompt = promptService.construirPrompt(
+                contexto,
+                request.pergunta()
+        );
 
-            String resposta = openAiClient.gerarResposta(prompt);
+        String resposta = openAiClient.gerarResposta(prompt);
 
-            return new ChatResponse(resposta);
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            return new ChatResponse("ERRO REAL: " + e.getMessage());
-        }
+        return new ChatResponse(resposta);
     }
 }

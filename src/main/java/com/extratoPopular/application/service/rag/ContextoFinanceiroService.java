@@ -23,19 +23,22 @@ public class ContextoFinanceiroService {
 
     public String gerarContextoFinanceiro() {
 
+        Long userId = SecurityUtils.getCurrentUserId();
+
+        int mes = LocalDate.now().getMonthValue();
+        int ano = LocalDate.now().getYear();
+
+        var resumo = resumoUseCase.execute(userId, mes, ano);
+        var insights = insightsUseCase.execute(userId);
+
         return """
             CONTEXTO FINANCEIRO DO USUÁRIO
 
             RESUMO:
-            - Receita mensal: R$ 4500
-            - Gastos com alimentação: R$ 850
-            - Gastos com transporte: R$ 320
-            - Gastos com lazer: R$ 540
+            %s
 
             INSIGHTS:
-            - Usuário gastou acima da média em lazer.
-            - Há oportunidade de economia em delivery.
-            - O saldo mensal permanece positivo.
-            """;
+            %s
+            """.formatted(resumo, insights);
     }
 }
