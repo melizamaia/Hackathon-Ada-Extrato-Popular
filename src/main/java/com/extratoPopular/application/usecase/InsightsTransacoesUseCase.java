@@ -1,6 +1,5 @@
 package com.extratoPopular.application.usecase;
 
-import com.extratoPopular.application.rag.TransacaoContextBuilder;
 import com.extratoPopular.domain.enums.TipoTransacao;
 import com.extratoPopular.domain.exception.UsuarioNaoAutenticadoException;
 import com.extratoPopular.domain.model.Transacao;
@@ -79,21 +78,6 @@ public class InsightsTransacoesUseCase {
                     return new CategoriaInsight(e.getKey(), e.getValue(), percentual);
                 })
                 .toList();
-
-        // =====================================================
-        // ADIÇÃO PARA RAG (CONTEXTO LLM)
-        // =====================================================
-        TransacaoContextBuilder builder = new TransacaoContextBuilder();
-
-        String contextoRag = builder.build(
-                gastosPorCategoria,
-                totalDespesas,
-                BigDecimal.ZERO // entradas ainda não agregadas aqui
-        );
-
-        System.out.println("=== CONTEXTO RAG ===");
-        System.out.println(contextoRag);
-        // =====================================================
 
         return new InsightsResponse(
                 categoriaComMaiorGasto,
