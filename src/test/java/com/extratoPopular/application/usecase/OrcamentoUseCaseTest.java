@@ -128,7 +128,7 @@ class OrcamentoUseCaseTest {
 
         OrcamentoResponse response = useCase.atualizar(USER_ID, 1L, request(Categoria.ALIMENTACAO, 800));
 
-        assertEquals(BigDecimal.valueOf(800), response.valorLimite());
+        assertEquals(0, BigDecimal.valueOf(800).compareTo(response.valorLimite()));
         verify(orcamentoRepository).save(any());
     }
 
