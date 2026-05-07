@@ -4,5 +4,3 @@ target/
 .idea/
 .vscode/
 *.sh
-*.log
-.env
