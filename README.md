@@ -28,7 +28,7 @@ O **Extrato Popular** transforma qualquer extrato bancário (CSV ou OFX) em um p
 | Documentação | SpringDoc OpenAPI 2 (Swagger UI) |
 | Testes | JUnit 5 + Mockito + MockMvc |
 | IA / RAG | OpenAI API (via RestClient) |
-| Build | Maven 3.x |
+| Build | Maven 3.9 (wrapper incluso) |
 
 ---
 
@@ -63,7 +63,7 @@ O **Extrato Popular** transforma qualquer extrato bancário (CSV ou OFX) em um p
 
 ## Como rodar localmente
 
-**Pré-requisitos:** Java 21 e Maven 3.x instalado.
+**Pré-requisitos:** Java 21. Maven Wrapper incluso — não é necessário instalar Maven.
 
 ```bash
 # 1. Clonar o repositório
@@ -71,10 +71,10 @@ git clone https://github.com/melizamaia/Hackathon-Ada-Extrato-Popular.git
 cd Hackathon-Ada-Extrato-Popular
 
 # 2. Rodar (H2 in-memory, sem necessidade de banco externo)
-mvn spring-boot:run
+./mvnw spring-boot:run
 
 # 3. Executar os testes
-mvn test
+./mvnw test
 ```
 
 A aplicação sobe na porta **8080**.
@@ -474,13 +474,13 @@ src/main/java/com/extratoPopular/
 
 ```bash
 # Todos os testes
-mvn test
+./mvnw test
 
 # Uma classe específica
-mvn test -Dtest=AuthControllerIntegrationTest
+./mvnw test -Dtest=AuthControllerIntegrationTest
 
 # Um método específico
-mvn test -Dtest=AuthControllerIntegrationTest#deve_retornar201_quando_registrarComDadosValidos
+./mvnw test -Dtest=AuthControllerIntegrationTest#deve_retornar201_quando_registrarComDadosValidos
 ```
 
 **190 testes · 0 falhas · BUILD SUCCESS**
