@@ -1,5 +1,6 @@
 package com.extratoPopular.application.usecase;
 
+import com.extratoPopular.application.rag.TransacaoContextBuilder;
 import com.extratoPopular.domain.enums.TipoTransacao;
 import com.extratoPopular.domain.exception.UsuarioNaoAutenticadoException;
 import com.extratoPopular.domain.model.Transacao;
@@ -60,8 +61,8 @@ public class InsightsTransacoesUseCase {
         BigDecimal rendaMensal = user.getRendaMensal();
         BigDecimal percentualRendaComprometida = rendaMensal.compareTo(BigDecimal.ZERO) > 0
                 ? totalDespesas.divide(rendaMensal, 4, RoundingMode.HALF_UP)
-                        .multiply(BigDecimal.valueOf(100))
-                        .setScale(2, RoundingMode.HALF_UP)
+                .multiply(BigDecimal.valueOf(100))
+                .setScale(2, RoundingMode.HALF_UP)
                 : BigDecimal.ZERO;
 
         boolean alertaGastoElevado = totalDespesas.compareTo(rendaMensal) > 0;
@@ -72,12 +73,27 @@ public class InsightsTransacoesUseCase {
                 .map(e -> {
                     BigDecimal percentual = totalDespesasRef.compareTo(BigDecimal.ZERO) > 0
                             ? e.getValue().divide(totalDespesasRef, 4, RoundingMode.HALF_UP)
-                                    .multiply(BigDecimal.valueOf(100))
-                                    .setScale(2, RoundingMode.HALF_UP)
+                            .multiply(BigDecimal.valueOf(100))
+                            .setScale(2, RoundingMode.HALF_UP)
                             : BigDecimal.ZERO;
                     return new CategoriaInsight(e.getKey(), e.getValue(), percentual);
                 })
                 .toList();
+
+        // =====================================================
+        // ADIÇÃO PARA RAG (CONTEXTO LLM)
+        // =====================================================
+        TransacaoContextBuilder builder = new TransacaoContextBuilder();
+
+        String contextoRag = builder.build(
+                gastosPorCategoria,
+                totalDespesas,
+                BigDecimal.ZERO // entradas ainda não agregadas aqui
+        );
+
+        System.out.println("=== CONTEXTO RAG ===");
+        System.out.println(contextoRag);
+        // =====================================================
 
         return new InsightsResponse(
                 categoriaComMaiorGasto,
