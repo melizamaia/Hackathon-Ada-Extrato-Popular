@@ -1,10 +1,13 @@
 package com.extratoPopular.interfaces.controller;
 
+import com.extratoPopular.application.service.ChatFinanceService;
+import com.extratoPopular.application.service.ReportFinanceService;
 import com.extratoPopular.infrastructure.security.SecurityUtils;
 import com.extratoPopular.interfaces.dto.AiChatRequest;
 import com.extratoPopular.interfaces.dto.AiChatResponse;
 import com.extratoPopular.interfaces.dto.RelatorioResponse;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -28,22 +31,31 @@ import java.time.LocalDateTime;
 @SecurityRequirement(name = "BearerAuth")
 public class AiController {
 
+    private final ChatFinanceService chatFinanceService;
+    private final ReportFinanceService reportFinanceService;
+
+    public AiController(ChatFinanceService chatFinanceService,
+                        ReportFinanceService reportFinanceService) {
+        this.chatFinanceService = chatFinanceService;
+        this.reportFinanceService = reportFinanceService;
+    }
+
     @PostMapping("/chat")
     @Operation(summary = "Interação com assistente financeiro inteligente")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Resposta do assistente"),
-            @ApiResponse(responseCode = "401", description = "Token ausente ou inválido")
+            @ApiResponse(responseCode = "400", description = "Mensagem inválida", content = @Content),
+            @ApiResponse(responseCode = "401", description = "Token ausente ou inválido", content = @Content),
+            @ApiResponse(responseCode = "503", description = "Serviço de IA indisponível", content = @Content)
     })
     public ResponseEntity<AiChatResponse> chat(
             @Valid @RequestBody AiChatRequest request
     ) {
         Long userId = SecurityUtils.getCurrentUserId();
 
-        // TODO M9: substituir mock por chatFinanceService.chat(userId, request.message())
-        AiChatResponse response = new AiChatResponse(
-                "Funcionalidade em integração",
-                LocalDateTime.now()
-        );
+        String result = chatFinanceService.chat(userId, request.message());
+
+        AiChatResponse response = new AiChatResponse(result, LocalDateTime.now());
 
         return ResponseEntity.ok(response);
     }
@@ -52,16 +64,17 @@ public class AiController {
     @Operation(summary = "Gera relatório financeiro personalizado com IA")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Relatório gerado com sucesso"),
-            @ApiResponse(responseCode = "401", description = "Token ausente ou inválido")
+            @ApiResponse(responseCode = "401", description = "Token ausente ou inválido", content = @Content),
+            @ApiResponse(responseCode = "503", description = "Serviço de IA indisponível", content = @Content)
     })
     public ResponseEntity<RelatorioResponse> relatorio() {
         Long userId = SecurityUtils.getCurrentUserId();
 
-        // TODO M9: substituir mock por reportFinanceService.generateReport(userId)
-        RelatorioResponse response = new RelatorioResponse(
-                "Relatório em integração"
-        );
+        String result = reportFinanceService.generateReport(userId);
+
+        RelatorioResponse response = new RelatorioResponse(result);
 
         return ResponseEntity.ok(response);
     }
 }
+

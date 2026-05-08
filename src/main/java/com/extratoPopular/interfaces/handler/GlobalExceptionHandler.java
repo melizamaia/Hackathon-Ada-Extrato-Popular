@@ -88,6 +88,12 @@ public class GlobalExceptionHandler {
         return new ErrorResponse("ORCAMENTO_DUPLICADO", List.of(ex.getMessage()));
     }
 
+    @ExceptionHandler(IllegalArgumentException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorResponse handleIllegalArgumentException(IllegalArgumentException ex) {
+        return new ErrorResponse("ARGUMENTO_INVALIDO", List.of(ex.getMessage()));
+    }
+
     @ExceptionHandler(AiIntegrationException.class)
     @ResponseStatus(HttpStatus.SERVICE_UNAVAILABLE)
     public ErrorResponse handleAiIntegrationException(AiIntegrationException ex) {
