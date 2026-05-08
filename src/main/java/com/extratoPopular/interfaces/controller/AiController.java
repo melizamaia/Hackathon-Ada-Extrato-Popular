@@ -24,57 +24,54 @@ import java.time.LocalDateTime;
 
 @RestController
 @RequestMapping("/api/v1")
-@Tag(
-        name = "IA Financeira v1",
-        description = "Endpoints de IA financeira — chat e relatórios inteligentes (v1)"
-)
+@Tag(name = "IA Financeira v1", description = "Endpoints de IA financeira — chat e relatórios inteligentes (v1)")
 @SecurityRequirement(name = "BearerAuth")
 public class AiController {
 
-    private final ChatFinanceService chatFinanceService;
-    private final ReportFinanceService reportFinanceService;
+        private final ChatFinanceService chatFinanceService;
+        private final ReportFinanceService reportFinanceService;
 
-    public AiController(ChatFinanceService chatFinanceService,
+        public AiController(ChatFinanceService chatFinanceService,
                         ReportFinanceService reportFinanceService) {
-        this.chatFinanceService = chatFinanceService;
-        this.reportFinanceService = reportFinanceService;
-    }
+                this.chatFinanceService = chatFinanceService;
+                this.reportFinanceService = reportFinanceService;
+        }
 
-    @PostMapping("/chat")
-    @Operation(summary = "Interação com assistente financeiro inteligente")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Resposta do assistente"),
-            @ApiResponse(responseCode = "400", description = "Mensagem inválida", content = @Content),
-            @ApiResponse(responseCode = "401", description = "Token ausente ou inválido", content = @Content),
-            @ApiResponse(responseCode = "503", description = "Serviço de IA indisponível", content = @Content)
-    })
-    public ResponseEntity<AiChatResponse> chat(
-            @Valid @RequestBody AiChatRequest request
-    ) {
-        Long userId = SecurityUtils.getCurrentUserId();
+        @PostMapping("/chat")
+        @Operation(summary = "Interação com assistente financeiro inteligente")
+        @ApiResponses(value = {
+                        @ApiResponse(responseCode = "200", description = "Resposta do assistente"),
+                        @ApiResponse(responseCode = "400", description = "Mensagem inválida", content = @Content),
+                        @ApiResponse(responseCode = "401", description = "Token ausente ou inválido", content = @Content),
+                        @ApiResponse(responseCode = "503", description = "Serviço de IA indisponível", content = @Content)
+        })
+        public ResponseEntity<AiChatResponse> chat(
+                        @Valid @RequestBody AiChatRequest request) {
+                // Long userId = SecurityUtils.getCurrentUserId();
 
-        String result = chatFinanceService.chat(userId, request.message());
+                Long userId = 1L;
+                String textoDaResposta = chatFinanceService.chat(userId, request.message());
 
-        AiChatResponse response = new AiChatResponse(result, LocalDateTime.now());
+                AiChatResponse response = new AiChatResponse(textoDaResposta, LocalDateTime.now());
 
-        return ResponseEntity.ok(response);
-    }
+                return ResponseEntity.ok(response);
+        }
 
-    @GetMapping("/relatorio")
-    @Operation(summary = "Gera relatório financeiro personalizado com IA")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Relatório gerado com sucesso"),
-            @ApiResponse(responseCode = "401", description = "Token ausente ou inválido", content = @Content),
-            @ApiResponse(responseCode = "503", description = "Serviço de IA indisponível", content = @Content)
-    })
-    public ResponseEntity<RelatorioResponse> relatorio() {
-        Long userId = SecurityUtils.getCurrentUserId();
+        @GetMapping("/relatorio")
+        @Operation(summary = "Gera relatório financeiro personalizado com IA")
+        @ApiResponses(value = {
+                        @ApiResponse(responseCode = "200", description = "Relatório gerado com sucesso"),
+                        @ApiResponse(responseCode = "401", description = "Token ausente ou inválido", content = @Content),
+                        @ApiResponse(responseCode = "503", description = "Serviço de IA indisponível", content = @Content)
+        })
+        public ResponseEntity<RelatorioResponse> relatorio() {
+                // Long userId = SecurityUtils.getCurrentUserId();
 
-        String result = reportFinanceService.generateReport(userId);
+                Long userId = 1L;
+                String resultado = reportFinanceService.generateReport(userId);
 
-        RelatorioResponse response = new RelatorioResponse(result);
+                RelatorioResponse response = new RelatorioResponse(resultado);
 
-        return ResponseEntity.ok(response);
-    }
+                return ResponseEntity.ok(response);
+        }
 }
-
