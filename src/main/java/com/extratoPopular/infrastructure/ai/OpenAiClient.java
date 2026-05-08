@@ -1,6 +1,6 @@
 package com.extratoPopular.infrastructure.ai;
 
-import com.extratoPopular.domain.exception.AiIndisponivelException;
+import com.extratoPopular.domain.exception.AiIntegrationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -55,22 +55,22 @@ public class OpenAiClient {
                     .body(OpenAiResponse.class);
 
             if (response == null || response.choices() == null || response.choices().isEmpty()) {
-                throw new AiIndisponivelException("IA retornou resposta vazia.");
+                throw new AiIntegrationException("IA retornou resposta vazia.", null);
             }
 
             return response.choices().getFirst().message().content();
 
         } catch (ResourceAccessException e) {
             log.error("Timeout na comunicação com a OpenAI: {}", e.getMessage());
-            throw new AiIndisponivelException("A IA demorou demais para responder. Tente novamente em instantes.");
+            throw new AiIntegrationException("A IA demorou demais para responder. Tente novamente em instantes.", e);
         } catch (RestClientResponseException e) {
             log.error("Erro HTTP da OpenAI: status={} body={}", e.getStatusCode(), e.getResponseBodyAsString());
-            throw new AiIndisponivelException("Serviço de IA indisponível (HTTP " + e.getStatusCode() + ").");
-        } catch (AiIndisponivelException e) {
+            throw new AiIntegrationException("Serviço de IA indisponível (HTTP " + e.getStatusCode() + ").", e);
+        } catch (AiIntegrationException e) {
             throw e;
         } catch (Exception e) {
             log.error("Erro inesperado ao chamar OpenAI: {}", e.getMessage());
-            throw new AiIndisponivelException("IA temporariamente indisponível. Tente novamente.");
+            throw new AiIntegrationException("IA temporariamente indisponível. Tente novamente.", e);
         }
     }
 

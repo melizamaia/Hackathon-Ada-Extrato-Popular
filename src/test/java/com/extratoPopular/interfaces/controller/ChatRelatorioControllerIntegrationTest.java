@@ -113,7 +113,7 @@ class ChatRelatorioControllerIntegrationTest {
     }
 
     @Test
-    void deve_retornar_400_quando_chat_receber_user_id_no_body() throws Exception {
+    void deve_ignorar_user_id_no_body_e_usar_token_jwt() throws Exception {
         Map<String, Object> body = Map.of(
                 "pergunta", "Qual meu maior gasto?",
                 "userId", 999L
@@ -123,8 +123,7 @@ class ChatRelatorioControllerIntegrationTest {
                         .header("Authorization", "Bearer " + token)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(body)))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.erro").value("VALIDACAO_FALHOU"));
+                .andExpect(status().isOk());
     }
 
     // =========================================================================

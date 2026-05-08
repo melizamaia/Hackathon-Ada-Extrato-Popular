@@ -47,9 +47,7 @@ public class AiController {
         })
         public ResponseEntity<AiChatResponse> chat(
                         @Valid @RequestBody AiChatRequest request) {
-                // Long userId = SecurityUtils.getCurrentUserId();
-
-                Long userId = 1L;
+                Long userId = SecurityUtils.getCurrentUserId();
                 String textoDaResposta = chatFinanceService.chat(userId, request.message());
 
                 AiChatResponse response = new AiChatResponse(textoDaResposta, LocalDateTime.now());
@@ -65,9 +63,7 @@ public class AiController {
                         @ApiResponse(responseCode = "503", description = "Serviço de IA indisponível", content = @Content)
         })
         public ResponseEntity<RelatorioResponse> relatorio() {
-                // Long userId = SecurityUtils.getCurrentUserId();
-
-                Long userId = 1L;
+                Long userId = SecurityUtils.getCurrentUserId();
                 String resultado = reportFinanceService.generateReport(userId);
 
                 RelatorioResponse response = new RelatorioResponse(resultado);

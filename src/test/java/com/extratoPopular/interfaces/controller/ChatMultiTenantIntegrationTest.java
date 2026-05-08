@@ -205,10 +205,10 @@ class ChatMultiTenantIntegrationTest {
     // =========================================================================
 
     @Test
-    @DisplayName("POST /chat — deve retornar 503 quando IA lançar AiIndisponivelException")
+    @DisplayName("POST /chat — deve retornar 503 quando IA lançar AiIntegrationException")
     void chat_deve_retornar_503_quando_ia_falhar() throws Exception {
         when(openAiClient.gerarResposta(anyString()))
-                .thenThrow(new com.extratoPopular.domain.exception.AiIndisponivelException("Timeout"));
+                .thenThrow(new com.extratoPopular.domain.exception.AiIntegrationException("Timeout", null));
 
         mockMvc.perform(post("/chat")
                         .header("Authorization", "Bearer " + tokenUsuarioA)
@@ -218,10 +218,10 @@ class ChatMultiTenantIntegrationTest {
     }
 
     @Test
-    @DisplayName("GET /relatorio — deve retornar 503 quando IA lançar AiIndisponivelException")
+    @DisplayName("GET /relatorio — deve retornar 503 quando IA lançar AiIntegrationException")
     void relatorio_deve_retornar_503_quando_ia_falhar() throws Exception {
         when(openAiClient.gerarResposta(anyString()))
-                .thenThrow(new com.extratoPopular.domain.exception.AiIndisponivelException("API key inválida"));
+                .thenThrow(new com.extratoPopular.domain.exception.AiIntegrationException("API key inválida", null));
 
         mockMvc.perform(get("/relatorio")
                         .header("Authorization", "Bearer " + tokenUsuarioA))

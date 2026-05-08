@@ -31,7 +31,7 @@ class ChatServiceTest {
         when(promptService.construirPrompt(any(), any())).thenReturn("PROMPT COMPLETO");
         when(openAiClient.gerarResposta("PROMPT COMPLETO")).thenReturn("Resposta da IA");
 
-        ChatResponse response = chatService.conversar(1L, new ChatRequest("Qual meu maior gasto?", null));
+        ChatResponse response = chatService.conversar(1L, new ChatRequest("Qual meu maior gasto?"));
 
         assertNotNull(response);
         assertEquals("Resposta da IA", response.resposta());
@@ -43,7 +43,7 @@ class ChatServiceTest {
         when(promptService.construirPrompt("CTX", "pergunta?")).thenReturn("prompt");
         when(openAiClient.gerarResposta(any())).thenReturn("ok");
 
-        chatService.conversar(1L, new ChatRequest("pergunta?", null));
+        chatService.conversar(1L, new ChatRequest("pergunta?"));
 
         verify(promptService).construirPrompt(eq("CTX"), eq("pergunta?"));
     }
@@ -54,7 +54,7 @@ class ChatServiceTest {
         when(promptService.construirPrompt(any(), any())).thenReturn("PROMPT FINAL");
         when(openAiClient.gerarResposta("PROMPT FINAL")).thenReturn("ok");
 
-        chatService.conversar(1L, new ChatRequest("teste", null));
+        chatService.conversar(1L, new ChatRequest("teste"));
 
         verify(openAiClient).gerarResposta("PROMPT FINAL");
     }
@@ -65,7 +65,7 @@ class ChatServiceTest {
         when(promptService.construirPrompt(any(), any())).thenReturn("p");
         when(openAiClient.gerarResposta(any())).thenReturn("r");
 
-        chatService.conversar(1L, new ChatRequest("teste", null));
+        chatService.conversar(1L, new ChatRequest("teste"));
 
         verify(contextoService, times(1)).gerarContextoFinanceiro(1L);
     }
@@ -76,7 +76,7 @@ class ChatServiceTest {
         when(promptService.construirPrompt(any(), any())).thenReturn("p");
         when(openAiClient.gerarResposta(any())).thenReturn("resposta válida");
 
-        ChatResponse response = chatService.conversar(1L, new ChatRequest("qualquer pergunta", null));
+        ChatResponse response = chatService.conversar(1L, new ChatRequest("qualquer pergunta"));
 
         assertNotNull(response);
         assertNotNull(response.resposta());
