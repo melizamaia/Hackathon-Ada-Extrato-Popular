@@ -3,7 +3,6 @@ package com.extratoPopular.application.service.rag;
 import com.extratoPopular.application.rag.TransacaoContextBuilder;
 import com.extratoPopular.application.usecase.InsightsTransacoesUseCase;
 import com.extratoPopular.application.usecase.ResumoTransacoesUseCase;
-import com.extratoPopular.infrastructure.security.SecurityUtils;
 import com.extratoPopular.interfaces.dto.InsightsResponse;
 import com.extratoPopular.interfaces.dto.ResumoResponse;
 import org.springframework.stereotype.Service;
@@ -25,8 +24,7 @@ public class ContextoFinanceiroService {
         this.insightsUseCase = insightsUseCase;
     }
 
-    public String gerarContextoFinanceiro() {
-        Long userId = SecurityUtils.getCurrentUserId();
+    public String gerarContextoFinanceiro(Long userId) {
         int mes = LocalDate.now().getMonthValue();
         int ano = LocalDate.now().getYear();
 

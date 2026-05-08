@@ -1,6 +1,7 @@
 package com.extratoPopular.interfaces.controller;
 
 import com.extratoPopular.application.service.RelatorioService;
+import com.extratoPopular.infrastructure.security.SecurityUtils;
 import com.extratoPopular.interfaces.dto.RelatorioResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -27,6 +28,7 @@ public class RelatorioController {
     @Operation(summary = "Gera relatório financeiro personalizado com IA")
     @SecurityRequirement(name = "BearerAuth")
     public RelatorioResponse gerar() {
-        return relatorioService.gerarRelatorio();
+        Long userId = SecurityUtils.getCurrentUserId();
+        return relatorioService.gerarRelatorio(userId);
     }
 }

@@ -26,11 +26,11 @@ class RelatorioServiceTest {
 
     @Test
     void deve_retornar_relatorio_gerado_pela_ia() {
-        when(contextoService.gerarContextoFinanceiro()).thenReturn("CONTEXTO");
+        when(contextoService.gerarContextoFinanceiro(1L)).thenReturn("CONTEXTO");
         when(promptService.construirPrompt("CONTEXTO")).thenReturn("PROMPT RELATORIO");
         when(openAiClient.gerarResposta("PROMPT RELATORIO")).thenReturn("Relatório completo.");
 
-        RelatorioResponse response = relatorioService.gerarRelatorio();
+        RelatorioResponse response = relatorioService.gerarRelatorio(1L);
 
         assertNotNull(response);
         assertEquals("Relatório completo.", response.relatorio());
@@ -38,44 +38,44 @@ class RelatorioServiceTest {
 
     @Test
     void deve_passar_contexto_para_o_promptService() {
-        when(contextoService.gerarContextoFinanceiro()).thenReturn("CTX");
+        when(contextoService.gerarContextoFinanceiro(1L)).thenReturn("CTX");
         when(promptService.construirPrompt("CTX")).thenReturn("p");
         when(openAiClient.gerarResposta(any())).thenReturn("r");
 
-        relatorioService.gerarRelatorio();
+        relatorioService.gerarRelatorio(1L);
 
         verify(promptService).construirPrompt("CTX");
     }
 
     @Test
     void deve_enviar_prompt_ao_openai_client() {
-        when(contextoService.gerarContextoFinanceiro()).thenReturn("ctx");
+        when(contextoService.gerarContextoFinanceiro(1L)).thenReturn("ctx");
         when(promptService.construirPrompt(any())).thenReturn("PROMPT FINAL");
         when(openAiClient.gerarResposta("PROMPT FINAL")).thenReturn("ok");
 
-        relatorioService.gerarRelatorio();
+        relatorioService.gerarRelatorio(1L);
 
         verify(openAiClient).gerarResposta("PROMPT FINAL");
     }
 
     @Test
     void deve_chamar_contexto_service_uma_vez() {
-        when(contextoService.gerarContextoFinanceiro()).thenReturn("ctx");
+        when(contextoService.gerarContextoFinanceiro(1L)).thenReturn("ctx");
         when(promptService.construirPrompt(any())).thenReturn("p");
         when(openAiClient.gerarResposta(any())).thenReturn("r");
 
-        relatorioService.gerarRelatorio();
+        relatorioService.gerarRelatorio(1L);
 
-        verify(contextoService, times(1)).gerarContextoFinanceiro();
+        verify(contextoService, times(1)).gerarContextoFinanceiro(1L);
     }
 
     @Test
     void deve_retornar_relatorio_nao_nulo() {
-        when(contextoService.gerarContextoFinanceiro()).thenReturn("ctx");
+        when(contextoService.gerarContextoFinanceiro(1L)).thenReturn("ctx");
         when(promptService.construirPrompt(any())).thenReturn("p");
         when(openAiClient.gerarResposta(any())).thenReturn("conteúdo do relatório");
 
-        RelatorioResponse response = relatorioService.gerarRelatorio();
+        RelatorioResponse response = relatorioService.gerarRelatorio(1L);
 
         assertNotNull(response);
         assertNotNull(response.relatorio());

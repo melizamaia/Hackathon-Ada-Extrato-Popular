@@ -23,9 +23,9 @@ public class RelatorioService {
         this.openAiClient = openAiClient;
     }
 
-    public RelatorioResponse gerarRelatorio() {
+    public RelatorioResponse gerarRelatorio(Long userId) {
 
-        String contexto = contextoService.gerarContextoFinanceiro();
+        String contexto = contextoService.gerarContextoFinanceiro(userId);
 
         String prompt = promptService.construirPrompt(contexto);
 

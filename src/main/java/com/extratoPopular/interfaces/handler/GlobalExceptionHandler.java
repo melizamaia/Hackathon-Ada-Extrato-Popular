@@ -11,6 +11,7 @@ import com.extratoPopular.domain.exception.UsuarioNaoAutenticadoException;
 import com.extratoPopular.interfaces.dto.ErrorResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.FieldError;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -85,6 +86,12 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.CONFLICT)
     public ErrorResponse handleOrcamentoDuplicadoException(OrcamentoDuplicadoException ex) {
         return new ErrorResponse("ORCAMENTO_DUPLICADO", List.of(ex.getMessage()));
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorResponse handleHttpMessageNotReadableException(HttpMessageNotReadableException ex) {
+        return new ErrorResponse("REQUISICAO_INVALIDA", List.of("JSON inválido ou contém campos não permitidos."));
     }
 
     @ExceptionHandler(Exception.class)
