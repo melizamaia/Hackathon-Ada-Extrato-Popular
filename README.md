@@ -63,7 +63,8 @@ O **Extrato Popular** transforma qualquer extrato bancário (CSV ou OFX) em um p
 - Integração com **OpenAI API** (gpt-4o-mini) via **Spring AI 1.0.0** (`ChatClient`)
 
 ### Segurança e auditoria da IA
-- **Isolamento multi-tenant**: contexto financeiro enviado à IA é sempre restrito ao usuário autenticado via JWT — impossível acessar dados de outro usuário
+- **Isolamento multi-tenant**: `userId` é extraído exclusivamente do token JWT via `SecurityUtils.getCurrentUserId()` — nenhum endpoint aceita `userId` via body, query param ou path variable
+- **Exceção unificada**: toda falha do LLM lança `AiIntegrationException` (com causa encadeada) e retorna `503 Service Unavailable` sem expor detalhes internos
 - **Timeout configurável** (`openai.timeout-ms`, padrão 10s): evita que lentidão da OpenAI trave requisições indefinidamente
 - **Tratamento de falhas da IA**: erros de rede, timeout e respostas inválidas retornam `503 Service Unavailable` com mensagem clara, sem expor detalhes internos
 - **Testes de vazamento**: suite de integração que prova o isolamento entre usuários interceptando o prompt real enviado à IA
@@ -356,7 +357,7 @@ Retorna `204 No Content`.
 
 #### `POST /chat` — Chat com assistente financeiro `🔒`
 
-O assistente recebe a pergunta e responde com base nas transações reais do usuário (pipeline RAG).
+O assistente recebe a pergunta e responde com base nas transações reais do usuário (pipeline RAG). O `userId` é extraído do token JWT — não deve ser enviado no body.
 
 **Request:**
 ```json
