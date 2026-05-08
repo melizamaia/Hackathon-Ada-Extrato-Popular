@@ -51,7 +51,7 @@ O **Extrato Popular** transforma qualquer extrato bancário (CSV ou OFX) em um p
 - **Insights**: categoria com maior gasto, percentual da renda comprometida, média por transação e top categorias
 - **Orçamentos**: limite de gasto por categoria/mês/ano com CRUD completo
 - **Alertas automáticos** integrados ao resumo: INFO (≥ 70%), AVISO (≥ 90%), CRÍTICO (≥ 100%)
-- **Otimização financeira**: análise de excessos, sugestão de redução por categoria e recomendação geral
+- **Otimização financeira**: análise de excessos com 3 algoritmos intercambiáveis via **Strategy Pattern** — Knapsack (mochila), Gulosa e ROI — selecionados automaticamente conforme o perfil de gastos do usuário
 
 ### Inteligência Artificial (Pipeline RAG)
 - **Chat financeiro** (`POST /chat`): assistente inteligente que responde perguntas sobre os próprios gastos do usuário em linguagem natural
@@ -387,6 +387,35 @@ Gera um relatório textual completo e personalizado com base em todo o históric
 
 ---
 
+#### `POST /api/v1/chat` — Chat IA (v2) `🔒`
+
+Versão aprimorada do chat com contexto RAG e isolamento multi-tenant garantido.
+
+**Request:**
+```json
+{ "message": "Como estão meus gastos este mês?" }
+```
+
+**Response `200 OK`:**
+```json
+{ "response": "Nos últimos 90 dias você teve R$ 1.240,00 em despesas..." }
+```
+
+---
+
+#### `GET /api/v1/relatorio` — Relatório IA (v2) `🔒`
+
+Versão aprimorada do relatório com avaliação de saúde financeira (Positiva / Atenção / Crítica).
+
+**Response `200 OK`:**
+```json
+{
+  "relatorio": "## Relatório Financeiro\n\n**Saúde financeira: Positiva**\n\nPeríodo analisado: ..."
+}
+```
+
+---
+
 ### Alertas de orçamento
 
 | Nível | Percentual atingido | Significado |
@@ -449,7 +478,7 @@ src/main/java/com/extratoPopular/
 │   └── exception/                 # Exceções tipadas de domínio
 │
 ├── application/                   # Casos de uso e serviços de aplicação
-│   ├── usecase/                   # Um caso de uso por operação (execute())
+│   ├── usecase/                   # Um caso de uso por operação
 │   │   ├── RegisterUserUseCase
 │   │   ├── LoginUserUseCase
 │   │   ├── GetUserProfileUseCase
@@ -457,15 +486,16 @@ src/main/java/com/extratoPopular/
 │   │   ├── ResumoTransacoesUseCase
 │   │   ├── InsightsTransacoesUseCase
 │   │   ├── OrcamentoUseCase
-│   │   └── OtimizacaoUseCase
-│   ├── usecase/                   # Um caso de uso por operação
-│   │   ├── ...
+│   │   ├── OtimizacaoUseCase
 │   │   ├── ChatFinanceService      # Orquestra contexto + Spring AI para o chat
 │   │   └── ReportFinanceService    # Orquestra contexto + Spring AI para o relatório
 │   ├── service/                   # HashService, CategorizacaoService
 │   │   ├── FinancialContextService # Interface: buildContext(Long userId)
-│   │   ├── ChatService            # (legado) Orquestra RAG + OpenAI para o chat
-│   │   ├── RelatorioService       # (legado) Orquestra RAG + OpenAI para o relatório
+│   │   ├── ChatService            # Orquestra RAG + OpenAI para o chat (v1)
+│   │   ├── RelatorioService       # Orquestra RAG + OpenAI para o relatório (v1)
+│   │   ├── otimizacao/            # Strategy Pattern: OtimizacaoStrategy (interface),
+│   │   │                          # KnapsackOtimizacaoStrategy, GulosaOtimizacaoStrategy,
+│   │   │                          # RoiOtimizacaoStrategy, OtimizacaoStrategyFactory
 │   │   └── rag/                   # ContextoFinanceiroService, PromptFinanceiroService,
 │   │                              # PromptRelatorioService
 │   └── dto/                       # TransacaoRaw, ParseResult
@@ -479,8 +509,8 @@ src/main/java/com/extratoPopular/
 │   └── config/                    # SwaggerConfig, AiConfig (bean ChatClient Spring AI)
 │
 └── interfaces/                    # Camada HTTP
-    ├── controller/                # AuthController, TransacaoController, OrcamentoController
-    │                              # ChatController, RelatorioController
+    ├── controller/                # AuthController, TransacaoController, OrcamentoController,
+    │                              # ChatController, RelatorioController, AiController (v2)
     ├── dto/                       # Records de request e response HTTP
     └── handler/                   # GlobalExceptionHandler
 ```
@@ -500,7 +530,7 @@ src/main/java/com/extratoPopular/
 ./mvnw test -Dtest=AuthControllerIntegrationTest#deve_retornar201_quando_registrarComDadosValidos
 ```
 
-**221 testes · 0 falhas · BUILD SUCCESS**
+**234 testes · 0 falhas · BUILD SUCCESS**
 
 | Classe de teste | Testes | Tipo |
 |----------------|--------|------|
@@ -516,14 +546,16 @@ src/main/java/com/extratoPopular/
 | `AnaliseFinanceiraControllerIntegrationTest` | 9 | Integração |
 | `AuthControllerIntegrationTest` | 8 | Integração |
 | `ReportFinanceServiceTest` | 8 | Unitário |
+| `ChatMultiTenantIntegrationTest` | 7 | Integração |
 | `ChatFinanceServiceTest` | 7 | Unitário |
+| `ChatRelatorioControllerIntegrationTest` | 7 | Integração |
 | `HashServiceTest` | 6 | Unitário |
 | `TransacaoControllerIntegrationTest` | 6 | Integração |
-| `ChatRelatorioControllerIntegrationTest` | 6 | Integração |
+| `AiControllerIntegrationTest` | 5 | Integração |
 | `ChatServiceTest` | 5 | Unitário |
 | `RelatorioServiceTest` | 5 | Unitário |
-| `LoginUserUseCaseTest` | 3 | Unitário |
 | `AiIntegrationExceptionTest` | 4 | Unitário |
+| `LoginUserUseCaseTest` | 3 | Unitário |
 | `RegisterUserUseCaseTest` | 2 | Unitário |
 
 ---
