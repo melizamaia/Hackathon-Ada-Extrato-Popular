@@ -27,11 +27,11 @@ class ChatServiceTest {
 
     @Test
     void deve_retornar_resposta_da_ia() {
-        when(contextoService.gerarContextoFinanceiro()).thenReturn("CONTEXTO FINANCEIRO");
+        when(contextoService.gerarContextoFinanceiro(1L)).thenReturn("CONTEXTO FINANCEIRO");
         when(promptService.construirPrompt(any(), any())).thenReturn("PROMPT COMPLETO");
         when(openAiClient.gerarResposta("PROMPT COMPLETO")).thenReturn("Resposta da IA");
 
-        ChatResponse response = chatService.conversar(new ChatRequest("Qual meu maior gasto?"));
+        ChatResponse response = chatService.conversar(1L, new ChatRequest("Qual meu maior gasto?", null));
 
         assertNotNull(response);
         assertEquals("Resposta da IA", response.resposta());
@@ -39,44 +39,44 @@ class ChatServiceTest {
 
     @Test
     void deve_passar_contexto_e_pergunta_para_o_promptService() {
-        when(contextoService.gerarContextoFinanceiro()).thenReturn("CTX");
+        when(contextoService.gerarContextoFinanceiro(1L)).thenReturn("CTX");
         when(promptService.construirPrompt("CTX", "pergunta?")).thenReturn("prompt");
         when(openAiClient.gerarResposta(any())).thenReturn("ok");
 
-        chatService.conversar(new ChatRequest("pergunta?"));
+        chatService.conversar(1L, new ChatRequest("pergunta?", null));
 
         verify(promptService).construirPrompt(eq("CTX"), eq("pergunta?"));
     }
 
     @Test
     void deve_enviar_prompt_completo_ao_openai_client() {
-        when(contextoService.gerarContextoFinanceiro()).thenReturn("ctx");
+        when(contextoService.gerarContextoFinanceiro(1L)).thenReturn("ctx");
         when(promptService.construirPrompt(any(), any())).thenReturn("PROMPT FINAL");
         when(openAiClient.gerarResposta("PROMPT FINAL")).thenReturn("ok");
 
-        chatService.conversar(new ChatRequest("teste"));
+        chatService.conversar(1L, new ChatRequest("teste", null));
 
         verify(openAiClient).gerarResposta("PROMPT FINAL");
     }
 
     @Test
     void deve_chamar_contexto_service_uma_vez_por_requisicao() {
-        when(contextoService.gerarContextoFinanceiro()).thenReturn("ctx");
+        when(contextoService.gerarContextoFinanceiro(1L)).thenReturn("ctx");
         when(promptService.construirPrompt(any(), any())).thenReturn("p");
         when(openAiClient.gerarResposta(any())).thenReturn("r");
 
-        chatService.conversar(new ChatRequest("teste"));
+        chatService.conversar(1L, new ChatRequest("teste", null));
 
-        verify(contextoService, times(1)).gerarContextoFinanceiro();
+        verify(contextoService, times(1)).gerarContextoFinanceiro(1L);
     }
 
     @Test
     void deve_retornar_resposta_nao_nula() {
-        when(contextoService.gerarContextoFinanceiro()).thenReturn("ctx");
+        when(contextoService.gerarContextoFinanceiro(1L)).thenReturn("ctx");
         when(promptService.construirPrompt(any(), any())).thenReturn("p");
         when(openAiClient.gerarResposta(any())).thenReturn("resposta válida");
 
-        ChatResponse response = chatService.conversar(new ChatRequest("qualquer pergunta"));
+        ChatResponse response = chatService.conversar(1L, new ChatRequest("qualquer pergunta", null));
 
         assertNotNull(response);
         assertNotNull(response.resposta());

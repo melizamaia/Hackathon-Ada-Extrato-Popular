@@ -112,6 +112,21 @@ class ChatRelatorioControllerIntegrationTest {
                 .andExpect(jsonPath("$.resposta").isNotEmpty());
     }
 
+    @Test
+    void deve_retornar_400_quando_chat_receber_user_id_no_body() throws Exception {
+        Map<String, Object> body = Map.of(
+                "pergunta", "Qual meu maior gasto?",
+                "userId", 999L
+        );
+
+        mockMvc.perform(post("/chat")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(body)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.erro").value("VALIDACAO_FALHOU"));
+    }
+
     // =========================================================================
     // GET /relatorio
     // =========================================================================

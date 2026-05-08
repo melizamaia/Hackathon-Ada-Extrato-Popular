@@ -24,9 +24,9 @@ public class ChatService {
         this.openAiClient = openAiClient;
     }
 
-    public ChatResponse conversar(ChatRequest request) {
+    public ChatResponse conversar(Long userId, ChatRequest request) {
 
-        String contexto = contextoService.gerarContextoFinanceiro();
+        String contexto = contextoService.gerarContextoFinanceiro(userId);
 
         String prompt = promptService.construirPrompt(
                 contexto,
