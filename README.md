@@ -27,7 +27,7 @@ O **Extrato Popular** transforma qualquer extrato bancário (CSV ou OFX) em um p
 | Persistência | Spring Data JPA + H2 (dev) + PostgreSQL (produção) |
 | Documentação | SpringDoc OpenAPI 2 (Swagger UI) |
 | Testes | JUnit 5 + Mockito + MockMvc |
-| IA / RAG | OpenAI API (via RestClient) |
+| IA / RAG | Spring AI 1.0.0 (`ChatClient`) + OpenAI API (gpt-4o-mini) |
 | Build | Maven 3.9 (wrapper incluso) |
 
 ---
@@ -56,8 +56,11 @@ O **Extrato Popular** transforma qualquer extrato bancário (CSV ou OFX) em um p
 ### Inteligência Artificial (Pipeline RAG)
 - **Chat financeiro** (`POST /chat`): assistente inteligente que responde perguntas sobre os próprios gastos do usuário em linguagem natural
 - **Relatório IA** (`GET /relatorio`): relatório financeiro personalizado gerado automaticamente pela IA com base no histórico de transações
-- **Pipeline RAG**: as transações do usuário são injetadas no contexto antes de cada chamada à IA, garantindo respostas precisas e personalizadas
-- Integração com **OpenAI API** (gpt-4o-mini) via `RestClient`
+- **FinancialContextService**: constrói o contexto financeiro dos últimos 90 dias — filtra, ordena por data, limita 50 transações, calcula receitas/despesas/saldo e top 3 categorias de gasto, com limite de ~4000 caracteres
+- **ChatFinanceService** e **ReportFinanceService**: use cases que orquestram o contexto + Spring AI `ChatClient` com system prompts específicos para cada finalidade
+- Resposta amigável sem chamar o LLM quando não há transações nos últimos 90 dias
+- **AiIntegrationException**: exceção de domínio para falhas no serviço de IA — retorna HTTP 503 sem expor detalhes internos
+- Integração com **OpenAI API** (gpt-4o-mini) via **Spring AI 1.0.0** (`ChatClient`)
 
 ---
 
@@ -421,6 +424,7 @@ Todos os erros seguem o padrão:
 | `TRANSACAO_DUPLICADA` | 409 | Hash já existe para o usuário |
 | `ORCAMENTO_DUPLICADO` | 409 | Já existe orçamento para esta categoria/mês/ano |
 | `ORCAMENTO_NAO_ENCONTRADO` | 404 | Orçamento não encontrado |
+| `AI_INDISPONIVEL` | 503 | Serviço de IA temporariamente indisponível |
 | `ERRO_INTERNO` | 500 | Erro inesperado no servidor |
 
 ---
@@ -447,19 +451,25 @@ src/main/java/com/extratoPopular/
 │   │   ├── InsightsTransacoesUseCase
 │   │   ├── OrcamentoUseCase
 │   │   └── OtimizacaoUseCase
+│   ├── usecase/                   # Um caso de uso por operação
+│   │   ├── ...
+│   │   ├── ChatFinanceService      # Orquestra contexto + Spring AI para o chat
+│   │   └── ReportFinanceService    # Orquestra contexto + Spring AI para o relatório
 │   ├── service/                   # HashService, CategorizacaoService
-│   │   ├── ChatService            # Orquestra RAG + OpenAI para o chat
-│   │   ├── RelatorioService       # Orquestra RAG + OpenAI para o relatório
+│   │   ├── FinancialContextService # Interface: buildContext(Long userId)
+│   │   ├── ChatService            # (legado) Orquestra RAG + OpenAI para o chat
+│   │   ├── RelatorioService       # (legado) Orquestra RAG + OpenAI para o relatório
 │   │   └── rag/                   # ContextoFinanceiroService, PromptFinanceiroService,
 │   │                              # PromptRelatorioService
 │   └── dto/                       # TransacaoRaw, ParseResult
 │
 ├── infrastructure/                # Implementações Spring e integrações externas
-│   ├── ai/                        # OpenAiClient (integração com a API da OpenAI via RestClient)
+│   ├── ai/                        # OpenAiClient, FinancialContextServiceImpl
+│   │                              # (contexto 90 dias, top 3 categorias, limite 4000 chars)
 │   ├── parser/                    # CsvParser, OfxParser
 │   ├── persistence/               # UserRepository, TransacaoRepository, OrcamentoRepository
 │   ├── security/                  # JwtService, JwtAuthenticationFilter, SecurityConfig, SecurityUtils
-│   └── config/                    # SwaggerConfig
+│   └── config/                    # SwaggerConfig, AiConfig (bean ChatClient Spring AI)
 │
 └── interfaces/                    # Camada HTTP
     ├── controller/                # AuthController, TransacaoController, OrcamentoController
@@ -483,26 +493,30 @@ src/main/java/com/extratoPopular/
 ./mvnw test -Dtest=AuthControllerIntegrationTest#deve_retornar201_quando_registrarComDadosValidos
 ```
 
-**190 testes · 0 falhas · BUILD SUCCESS**
+**221 testes · 0 falhas · BUILD SUCCESS**
 
 | Classe de teste | Testes | Tipo |
 |----------------|--------|------|
 | `CategorizacaoServiceTest` | 52 | Unitário |
 | `CsvParserTest` | 16 | Unitário |
+| `OfxParserTest` | 15 | Unitário |
 | `OrcamentoControllerIntegrationTest` | 13 | Integração |
+| `FinancialContextServiceImplTest` | 12 | Unitário |
 | `IngestaoTransacoesUseCaseTest` | 12 | Unitário |
 | `OrcamentoUseCaseTest` | 11 | Unitário |
 | `ResumoTransacoesUseCaseTest` | 11 | Unitário |
 | `OtimizacaoUseCaseTest` | 10 | Unitário |
-| `OfxParserTest` | 15 | Unitário |
 | `AnaliseFinanceiraControllerIntegrationTest` | 9 | Integração |
 | `AuthControllerIntegrationTest` | 8 | Integração |
+| `ReportFinanceServiceTest` | 8 | Unitário |
+| `ChatFinanceServiceTest` | 7 | Unitário |
 | `HashServiceTest` | 6 | Unitário |
 | `TransacaoControllerIntegrationTest` | 6 | Integração |
 | `ChatRelatorioControllerIntegrationTest` | 6 | Integração |
 | `ChatServiceTest` | 5 | Unitário |
 | `RelatorioServiceTest` | 5 | Unitário |
 | `LoginUserUseCaseTest` | 3 | Unitário |
+| `AiIntegrationExceptionTest` | 4 | Unitário |
 | `RegisterUserUseCaseTest` | 2 | Unitário |
 
 ---
