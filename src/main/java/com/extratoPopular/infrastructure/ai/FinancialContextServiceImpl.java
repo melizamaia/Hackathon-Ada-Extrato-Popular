@@ -10,11 +10,14 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
 public class FinancialContextServiceImpl implements FinancialContextService {
+
+    private static final Locale PT_BR = Locale.of("pt", "BR");
 
     private final TransacaoRepository transacaoRepository;
 
@@ -44,12 +47,12 @@ public class FinancialContextServiceImpl implements FinancialContextService {
         sb.append("Período: ").append(noventaDiasAtras).append(" a ").append(hoje).append("\n");
         sb.append("Total de transações: ").append(transacoes.size()).append("\n\n");
 
-        sb.append(String.format("%-10s | %-13s | %-7s | %-10s | %s%n",
+        sb.append(String.format(PT_BR, "%-10s | %-13s | %-7s | %-10s | %s%n",
                 "DATA", "CATEGORIA", "TIPO", "VALOR", "DESCRIÇÃO"));
         sb.append("-".repeat(70)).append("\n");
 
         for (Transacao t : transacoes) {
-            sb.append(String.format("%-10s | %-13s | %-7s | R$%8.2f | %s%n",
+            sb.append(String.format(PT_BR, "%-10s | %-13s | %-7s | R$%8.2f | %s%n",
                     t.getData(),
                     t.getCategoria(),
                     t.getTipo(),
@@ -74,9 +77,9 @@ public class FinancialContextServiceImpl implements FinancialContextService {
         BigDecimal saldo = totalReceitas.subtract(totalDespesas);
 
         sb.append("\n=== RESUMO ===\n");
-        sb.append(String.format("Total receitas: R$ %.2f%n", totalReceitas));
-        sb.append(String.format("Total despesas: R$ %.2f%n", totalDespesas));
-        sb.append(String.format("Saldo: R$ %.2f%n", saldo));
+        sb.append(String.format(PT_BR, "Total receitas: R$ %.2f%n", totalReceitas));
+        sb.append(String.format(PT_BR, "Total despesas: R$ %.2f%n", totalDespesas));
+        sb.append(String.format(PT_BR, "Saldo: R$ %.2f%n", saldo));
 
         Map<String, BigDecimal> gastosPorCategoria = transacoes.stream()
                 .filter(t -> t.getTipo() == TipoTransacao.DEBITO)
@@ -89,7 +92,7 @@ public class FinancialContextServiceImpl implements FinancialContextService {
         gastosPorCategoria.entrySet().stream()
                 .sorted(Map.Entry.<String, BigDecimal>comparingByValue().reversed())
                 .limit(3)
-                .forEach(e -> sb.append(String.format("- %s: R$ %.2f%n", e.getKey(), e.getValue())));
+                .forEach(e -> sb.append(String.format(PT_BR, "- %s: R$ %.2f%n", e.getKey(), e.getValue())));
 
         String resultado = sb.toString();
         if (resultado.length() > 4000) {
