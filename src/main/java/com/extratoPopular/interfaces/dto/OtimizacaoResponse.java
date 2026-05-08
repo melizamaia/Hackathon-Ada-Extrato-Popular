@@ -11,7 +11,10 @@ public record OtimizacaoResponse(
         List<SugestaoCategoria> gastosAcimaOrcamento,
         List<String> categoriasSeemOrcamento,
         BigDecimal economiasPotenciais,
-        String recomendacaoGeral
+        String recomendacaoGeral,
+        String algoritmoUtilizado,
+        String descricaoAlgoritmo,
+        List<AcaoRecomendada> acoesRecomendadas
 ) {
     public record SugestaoCategoria(
             String categoria,
@@ -19,5 +22,13 @@ public record OtimizacaoResponse(
             BigDecimal valorGasto,
             BigDecimal excesso,
             String sugestao
+    ) {}
+
+    public record AcaoRecomendada(
+            String categoria,
+            BigDecimal economiaPotencial,
+            int dificuldade,
+            String descricaoAcao,
+            int prioridade
     ) {}
 }
