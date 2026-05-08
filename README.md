@@ -59,6 +59,12 @@ O **Extrato Popular** transforma qualquer extrato bancário (CSV ou OFX) em um p
 - **Pipeline RAG**: as transações do usuário são injetadas no contexto antes de cada chamada à IA, garantindo respostas precisas e personalizadas
 - Integração com **OpenAI API** (gpt-4o-mini) via `RestClient`
 
+### Segurança e auditoria da IA
+- **Isolamento multi-tenant**: contexto financeiro enviado à IA é sempre restrito ao usuário autenticado via JWT — impossível acessar dados de outro usuário
+- **Timeout configurável** (`openai.timeout-ms`, padrão 10s): evita que lentidão da OpenAI trave requisições indefinidamente
+- **Tratamento de falhas da IA**: erros de rede, timeout e respostas inválidas retornam `503 Service Unavailable` com mensagem clara, sem expor detalhes internos
+- **Testes de vazamento**: suite de integração que prova o isolamento entre usuários interceptando o prompt real enviado à IA
+
 ---
 
 ## Como rodar localmente
@@ -93,6 +99,7 @@ A aplicação sobe na porta **8080**.
 | `OPENAI_API_KEY` | `chave-nao-configurada` | Chave da API OpenAI (obrigatória para chat e relatório) |
 | `JWT_SECRET` | valor Base64 de exemplo | Segredo Base64 para assinar o JWT |
 | `JWT_EXPIRATION` | `3600000` | Expiração do token em ms (1 hora) |
+| `openai.timeout-ms` | `10000` | Timeout das chamadas à OpenAI em ms (padrão 10s) |
 
 Para usar PostgreSQL em produção, descomente o bloco correspondente em `src/main/resources/application.properties` e ajuste as credenciais.
 
