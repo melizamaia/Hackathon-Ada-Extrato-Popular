@@ -531,7 +531,7 @@ src/main/java/com/extratoPopular/
 ./mvnw test -Dtest=AuthControllerIntegrationTest#deve_retornar201_quando_registrarComDadosValidos
 ```
 
-**234 testes · 0 falhas · BUILD SUCCESS**
+**242 testes · 0 falhas · BUILD SUCCESS**
 
 | Classe de teste | Testes | Tipo |
 |----------------|--------|------|
@@ -547,6 +547,7 @@ src/main/java/com/extratoPopular/
 | `AnaliseFinanceiraControllerIntegrationTest` | 9 | Integração |
 | `AuthControllerIntegrationTest` | 8 | Integração |
 | `ReportFinanceServiceTest` | 8 | Unitário |
+| `AiControllerMultiTenantIntegrationTest` | 8 | Integração |
 | `ChatMultiTenantIntegrationTest` | 7 | Integração |
 | `ChatFinanceServiceTest` | 7 | Unitário |
 | `ChatRelatorioControllerIntegrationTest` | 7 | Integração |
