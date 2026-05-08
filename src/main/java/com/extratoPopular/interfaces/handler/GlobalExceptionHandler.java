@@ -1,5 +1,6 @@
 package com.extratoPopular.interfaces.handler;
 
+import com.extratoPopular.domain.exception.AiIndisponivelException;
 import com.extratoPopular.domain.exception.ArquivoVazioException;
 import com.extratoPopular.domain.exception.CredenciaisInvalidasException;
 import com.extratoPopular.domain.exception.EmailJaCadastradoException;
@@ -85,6 +86,12 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.CONFLICT)
     public ErrorResponse handleOrcamentoDuplicadoException(OrcamentoDuplicadoException ex) {
         return new ErrorResponse("ORCAMENTO_DUPLICADO", List.of(ex.getMessage()));
+    }
+
+    @ExceptionHandler(AiIndisponivelException.class)
+    @ResponseStatus(HttpStatus.SERVICE_UNAVAILABLE)
+    public ErrorResponse handleAiIndisponivelException(AiIndisponivelException ex) {
+        return new ErrorResponse("AI_INDISPONIVEL", List.of(ex.getMessage()));
     }
 
     @ExceptionHandler(Exception.class)
