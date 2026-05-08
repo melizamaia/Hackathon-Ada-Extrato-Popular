@@ -1,5 +1,6 @@
 package com.extratoPopular.interfaces.handler;
 
+import com.extratoPopular.domain.exception.AiIndisponivelException;
 import com.extratoPopular.domain.exception.AiIntegrationException;
 import com.extratoPopular.domain.exception.ArquivoVazioException;
 import com.extratoPopular.domain.exception.CredenciaisInvalidasException;
@@ -97,7 +98,13 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(AiIntegrationException.class)
     @ResponseStatus(HttpStatus.SERVICE_UNAVAILABLE)
     public ErrorResponse handleAiIntegrationException(AiIntegrationException ex) {
-        return new ErrorResponse("IA_INDISPONIVEL", null);
+        return new ErrorResponse("AI_INDISPONIVEL", List.of("Serviço de IA temporariamente indisponível."));
+    }
+
+    @ExceptionHandler(AiIndisponivelException.class)
+    @ResponseStatus(HttpStatus.SERVICE_UNAVAILABLE)
+    public ErrorResponse handleAiIndisponivelException(AiIndisponivelException ex) {
+        return new ErrorResponse("AI_INDISPONIVEL", List.of("Serviço de IA temporariamente indisponível."));
     }
 
     @ExceptionHandler(Exception.class)

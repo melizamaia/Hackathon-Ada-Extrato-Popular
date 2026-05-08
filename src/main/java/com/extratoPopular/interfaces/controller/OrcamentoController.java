@@ -96,7 +96,9 @@ public class OrcamentoController {
         return ResponseEntity.noContent().build();
     }
 
-    @Operation(summary = "Algoritmo de otimização financeira para o mês/ano informado (padrão: mês atual)")
+    @Operation(summary = "Algoritmo de otimização financeira para o mês/ano informado (padrão: mês atual)",
+               description = "Seleciona quais categorias cortar para maximizar a economia. "
+                       + "algoritmo aceita: KNAPSACK (padrão, DP 0/1), GULOSA (greedy por eficiência), ROI (ranqueamento por retorno).")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Otimização calculada com sucesso"),
             @ApiResponse(responseCode = "401", description = "Token ausente ou inválido", content = @Content)
@@ -104,10 +106,11 @@ public class OrcamentoController {
     @GetMapping("/otimizacao")
     public ResponseEntity<OtimizacaoResponse> otimizacao(
             @RequestParam(required = false) Integer mes,
-            @RequestParam(required = false) Integer ano) {
+            @RequestParam(required = false) Integer ano,
+            @RequestParam(required = false) String algoritmo) {
         Long userId = SecurityUtils.getCurrentUserId();
         int m = mes != null ? mes : LocalDate.now().getMonthValue();
         int a = ano != null ? ano : LocalDate.now().getYear();
-        return ResponseEntity.ok(otimizacaoUseCase.execute(userId, m, a));
+        return ResponseEntity.ok(otimizacaoUseCase.execute(userId, m, a, algoritmo));
     }
 }

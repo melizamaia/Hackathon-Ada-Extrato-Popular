@@ -1,5 +1,10 @@
 package com.extratoPopular.application.usecase;
 
+import com.extratoPopular.application.service.otimizacao.AcaoOtimizacao;
+import com.extratoPopular.application.service.otimizacao.ItemOtimizacao;
+import com.extratoPopular.application.service.otimizacao.OtimizacaoStrategy;
+import com.extratoPopular.application.service.otimizacao.OtimizacaoStrategyFactory;
+import com.extratoPopular.application.service.otimizacao.ResultadoOtimizacao;
 import com.extratoPopular.domain.enums.TipoTransacao;
 import com.extratoPopular.domain.exception.UsuarioNaoAutenticadoException;
 import com.extratoPopular.domain.model.Orcamento;
@@ -9,6 +14,7 @@ import com.extratoPopular.infrastructure.persistence.OrcamentoRepository;
 import com.extratoPopular.infrastructure.persistence.TransacaoRepository;
 import com.extratoPopular.infrastructure.persistence.UserRepository;
 import com.extratoPopular.interfaces.dto.OtimizacaoResponse;
+import com.extratoPopular.interfaces.dto.OtimizacaoResponse.AcaoRecomendada;
 import com.extratoPopular.interfaces.dto.OtimizacaoResponse.SugestaoCategoria;
 import org.springframework.stereotype.Service;
 
@@ -28,16 +34,19 @@ public class OtimizacaoUseCase {
     private final TransacaoRepository transacaoRepository;
     private final OrcamentoRepository orcamentoRepository;
     private final UserRepository userRepository;
+    private final OtimizacaoStrategyFactory strategyFactory;
 
     public OtimizacaoUseCase(TransacaoRepository transacaoRepository,
                               OrcamentoRepository orcamentoRepository,
-                              UserRepository userRepository) {
+                              UserRepository userRepository,
+                              OtimizacaoStrategyFactory strategyFactory) {
         this.transacaoRepository = transacaoRepository;
-        this.orcamentoRepository = orcamentoRepository;
-        this.userRepository = userRepository;
+        this.orcamentoRepository  = orcamentoRepository;
+        this.userRepository       = userRepository;
+        this.strategyFactory      = strategyFactory;
     }
 
-    public OtimizacaoResponse execute(Long userId, int mes, int ano) {
+    public OtimizacaoResponse execute(Long userId, int mes, int ano, String algoritmo) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UsuarioNaoAutenticadoException("Usuário não encontrado."));
 
@@ -61,9 +70,10 @@ public class OtimizacaoUseCase {
             }
         }
 
-        // Categorias com orçamento estourado
         List<SugestaoCategoria> gastosAcimaOrcamento = new ArrayList<>();
+        List<ItemOtimizacao> itensParaOtimizar = new ArrayList<>();
         BigDecimal economiasPotenciais = BigDecimal.ZERO;
+
         Set<String> categoriasComOrcamento = orcamentos.stream()
                 .map(o -> o.getCategoria().name())
                 .collect(Collectors.toSet());
@@ -73,18 +83,26 @@ public class OtimizacaoUseCase {
             if (gasto.compareTo(orcamento.getValorLimite()) > 0) {
                 BigDecimal excesso = gasto.subtract(orcamento.getValorLimite());
                 economiasPotenciais = economiasPotenciais.add(excesso);
+
                 gastosAcimaOrcamento.add(new SugestaoCategoria(
                         orcamento.getCategoria().name(),
                         orcamento.getValorLimite(),
                         gasto,
                         excesso,
-                        "Reduza R$ " + excesso.setScale(2, RoundingMode.HALF_UP) +
-                        " em " + orcamento.getCategoria() + " para ficar dentro do orçamento"
+                        "Reduza R$ " + excesso.setScale(2, RoundingMode.HALF_UP)
+                                + " em " + orcamento.getCategoria() + " para ficar dentro do orçamento"
+                ));
+
+                itensParaOtimizar.add(new ItemOtimizacao(
+                        orcamento.getCategoria().name(),
+                        excesso,
+                        orcamento.getValorLimite(),
+                        gasto,
+                        calcularDificuldade(excesso, orcamento.getValorLimite())
                 ));
             }
         }
 
-        // Categorias com gasto mas sem orçamento definido
         List<String> categoriasSeemOrcamento = gastosPorCategoria.keySet().stream()
                 .filter(c -> !categoriasComOrcamento.contains(c))
                 .sorted()
@@ -92,7 +110,6 @@ public class OtimizacaoUseCase {
 
         BigDecimal saldo = totalReceitas.subtract(totalDespesas);
         BigDecimal rendaMensal = user.getRendaMensal();
-
         BigDecimal percentualRendaComprometida = rendaMensal.compareTo(BigDecimal.ZERO) > 0
                 ? totalDespesas.divide(rendaMensal, 4, RoundingMode.HALF_UP)
                         .multiply(BigDecimal.valueOf(100))
@@ -103,11 +120,38 @@ public class OtimizacaoUseCase {
                 percentualRendaComprometida, gastosAcimaOrcamento.size(),
                 categoriasSeemOrcamento.size(), economiasPotenciais);
 
+        OtimizacaoStrategy strategy = strategyFactory.get(algoritmo);
+        ResultadoOtimizacao resultado = strategy.otimizar(itensParaOtimizar);
+
+        List<AcaoRecomendada> acoesRecomendadas = resultado.acoes().stream()
+                .map(a -> new AcaoRecomendada(
+                        a.categoria(),
+                        a.economiaPotencial(),
+                        a.dificuldade(),
+                        a.descricaoAcao(),
+                        a.prioridade()
+                ))
+                .toList();
+
         return new OtimizacaoResponse(
                 mes, ano, saldo, percentualRendaComprometida,
                 gastosAcimaOrcamento, categoriasSeemOrcamento,
-                economiasPotenciais, recomendacaoGeral
+                economiasPotenciais, recomendacaoGeral,
+                resultado.nomeAlgoritmo(),
+                resultado.descricaoAlgoritmo(),
+                acoesRecomendadas
         );
+    }
+
+    private int calcularDificuldade(BigDecimal excesso, BigDecimal limite) {
+        if (limite.compareTo(BigDecimal.ZERO) == 0) return 5;
+        BigDecimal pct = excesso.divide(limite, 4, RoundingMode.HALF_UP)
+                .multiply(BigDecimal.valueOf(100));
+        if (pct.compareTo(BigDecimal.valueOf(200)) > 0) return 10;
+        if (pct.compareTo(BigDecimal.valueOf(100)) > 0) return 8;
+        if (pct.compareTo(BigDecimal.valueOf(50))  > 0) return 6;
+        if (pct.compareTo(BigDecimal.valueOf(20))  > 0) return 4;
+        return 2;
     }
 
     private String gerarRecomendacao(BigDecimal percentualRenda, int qtdAcima,

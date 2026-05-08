@@ -1,7 +1,7 @@
 package com.extratoPopular.interfaces.controller;
 
-import com.extratoPopular.application.service.ChatFinanceService;
-import com.extratoPopular.application.service.ReportFinanceService;
+import com.extratoPopular.application.usecase.ChatFinanceService;
+import com.extratoPopular.application.usecase.ReportFinanceService;
 import com.extratoPopular.infrastructure.security.SecurityUtils;
 import com.extratoPopular.interfaces.dto.AiChatRequest;
 import com.extratoPopular.interfaces.dto.AiChatResponse;

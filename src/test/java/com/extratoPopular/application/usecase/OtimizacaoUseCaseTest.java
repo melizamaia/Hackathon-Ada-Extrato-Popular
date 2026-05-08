@@ -7,6 +7,9 @@ import com.extratoPopular.domain.exception.UsuarioNaoAutenticadoException;
 import com.extratoPopular.domain.model.Orcamento;
 import com.extratoPopular.domain.model.Transacao;
 import com.extratoPopular.domain.model.User;
+import com.extratoPopular.application.service.otimizacao.OtimizacaoStrategy;
+import com.extratoPopular.application.service.otimizacao.OtimizacaoStrategyFactory;
+import com.extratoPopular.application.service.otimizacao.ResultadoOtimizacao;
 import com.extratoPopular.infrastructure.persistence.OrcamentoRepository;
 import com.extratoPopular.infrastructure.persistence.TransacaoRepository;
 import com.extratoPopular.infrastructure.persistence.UserRepository;
@@ -30,9 +33,11 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class OtimizacaoUseCaseTest {
 
-    @Mock private TransacaoRepository transacaoRepository;
-    @Mock private OrcamentoRepository orcamentoRepository;
-    @Mock private UserRepository userRepository;
+    @Mock private TransacaoRepository   transacaoRepository;
+    @Mock private OrcamentoRepository   orcamentoRepository;
+    @Mock private UserRepository        userRepository;
+    @Mock private OtimizacaoStrategyFactory strategyFactory;
+    @Mock private OtimizacaoStrategy    mockStrategy;
 
     @InjectMocks
     private OtimizacaoUseCase useCase;
@@ -50,6 +55,13 @@ class OtimizacaoUseCaseTest {
         user.setSenha("senha");
         user.setRendaMensal(new BigDecimal("3000.00"));
         when(userRepository.findById(USER_ID)).thenReturn(Optional.of(user));
+
+        lenient().when(strategyFactory.get(any()))
+                .thenReturn(mockStrategy);
+        lenient().when(mockStrategy.otimizar(any()))
+                .thenReturn(new ResultadoOtimizacao(List.of(), BigDecimal.ZERO, "KNAPSACK", "desc"));
+        lenient().when(mockStrategy.getNome()).thenReturn("KNAPSACK");
+        lenient().when(mockStrategy.getDescricao()).thenReturn("desc");
     }
 
     private Transacao debito(BigDecimal valor, Categoria categoria) {
@@ -96,7 +108,7 @@ class OtimizacaoUseCaseTest {
         when(orcamentoRepository.findByUserIdAndMesAndAno(anyLong(), anyInt(), anyInt()))
                 .thenReturn(List.of());
 
-        OtimizacaoResponse response = useCase.execute(USER_ID, MES, ANO);
+        OtimizacaoResponse response = useCase.execute(USER_ID, MES, ANO, null);
 
         assertTrue(response.gastosAcimaOrcamento().isEmpty());
         assertTrue(response.categoriasSeemOrcamento().isEmpty());
@@ -113,7 +125,7 @@ class OtimizacaoUseCaseTest {
         when(orcamentoRepository.findByUserIdAndMesAndAno(anyLong(), anyInt(), anyInt()))
                 .thenReturn(List.of(o));
 
-        OtimizacaoResponse response = useCase.execute(USER_ID, MES, ANO);
+        OtimizacaoResponse response = useCase.execute(USER_ID, MES, ANO, null);
 
         assertEquals(1, response.gastosAcimaOrcamento().size());
         assertEquals("ALIMENTACAO", response.gastosAcimaOrcamento().get(0).categoria());
@@ -131,7 +143,7 @@ class OtimizacaoUseCaseTest {
         when(orcamentoRepository.findByUserIdAndMesAndAno(anyLong(), anyInt(), anyInt()))
                 .thenReturn(List.of(o));
 
-        OtimizacaoResponse response = useCase.execute(USER_ID, MES, ANO);
+        OtimizacaoResponse response = useCase.execute(USER_ID, MES, ANO, null);
 
         assertTrue(response.gastosAcimaOrcamento().isEmpty());
         assertEquals(BigDecimal.ZERO, response.economiasPotenciais());
@@ -146,7 +158,7 @@ class OtimizacaoUseCaseTest {
         when(orcamentoRepository.findByUserIdAndMesAndAno(anyLong(), anyInt(), anyInt()))
                 .thenReturn(List.of());
 
-        OtimizacaoResponse response = useCase.execute(USER_ID, MES, ANO);
+        OtimizacaoResponse response = useCase.execute(USER_ID, MES, ANO, null);
 
         assertTrue(response.categoriasSeemOrcamento().contains("LAZER"));
     }
@@ -161,7 +173,7 @@ class OtimizacaoUseCaseTest {
         when(orcamentoRepository.findByUserIdAndMesAndAno(anyLong(), anyInt(), anyInt()))
                 .thenReturn(List.of(o));
 
-        OtimizacaoResponse response = useCase.execute(USER_ID, MES, ANO);
+        OtimizacaoResponse response = useCase.execute(USER_ID, MES, ANO, null);
 
         assertFalse(response.categoriasSeemOrcamento().contains("ALIMENTACAO"));
     }
@@ -175,7 +187,7 @@ class OtimizacaoUseCaseTest {
         when(orcamentoRepository.findByUserIdAndMesAndAno(anyLong(), anyInt(), anyInt()))
                 .thenReturn(List.of());
 
-        OtimizacaoResponse response = useCase.execute(USER_ID, MES, ANO);
+        OtimizacaoResponse response = useCase.execute(USER_ID, MES, ANO, null);
 
         assertEquals(new BigDecimal("50.00"), response.percentualRendaComprometida());
     }
@@ -190,7 +202,7 @@ class OtimizacaoUseCaseTest {
         when(orcamentoRepository.findByUserIdAndMesAndAno(anyLong(), anyInt(), anyInt()))
                 .thenReturn(List.of());
 
-        OtimizacaoResponse response = useCase.execute(USER_ID, MES, ANO);
+        OtimizacaoResponse response = useCase.execute(USER_ID, MES, ANO, null);
 
         assertEquals(new BigDecimal("2500.00"), response.saldoMensal());
     }
@@ -202,7 +214,7 @@ class OtimizacaoUseCaseTest {
         when(orcamentoRepository.findByUserIdAndMesAndAno(anyLong(), anyInt(), anyInt()))
                 .thenReturn(List.of());
 
-        OtimizacaoResponse response = useCase.execute(USER_ID, MES, ANO);
+        OtimizacaoResponse response = useCase.execute(USER_ID, MES, ANO, null);
 
         assertEquals(MES, response.mes());
         assertEquals(ANO, response.ano());
@@ -213,7 +225,7 @@ class OtimizacaoUseCaseTest {
         when(userRepository.findById(USER_ID)).thenReturn(Optional.empty());
 
         assertThrows(UsuarioNaoAutenticadoException.class,
-                () -> useCase.execute(USER_ID, MES, ANO));
+                () -> useCase.execute(USER_ID, MES, ANO, null));
     }
 
     @Test
@@ -228,7 +240,7 @@ class OtimizacaoUseCaseTest {
         when(orcamentoRepository.findByUserIdAndMesAndAno(anyLong(), anyInt(), anyInt()))
                 .thenReturn(List.of(o1, o2));
 
-        OtimizacaoResponse response = useCase.execute(USER_ID, MES, ANO);
+        OtimizacaoResponse response = useCase.execute(USER_ID, MES, ANO, null);
 
         assertEquals(2, response.gastosAcimaOrcamento().size());
         assertEquals(new BigDecimal("250.00"), response.economiasPotenciais());
