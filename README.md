@@ -26,7 +26,7 @@ O **Extrato Popular** transforma qualquer extrato bancário (CSV ou OFX) em um p
 | Segurança | Spring Security 6 + JWT (JJWT 0.12) |
 | Persistência | Spring Data JPA + H2 (dev) + PostgreSQL (produção) |
 | Documentação | SpringDoc OpenAPI 2 (Swagger UI) |
-| Testes | JUnit 5 + Mockito + MockMvc |
+| Testes | JUnit 5 + Mockito + MockMvc + JaCoCo |
 | IA / RAG | Spring AI 1.0.0 (`ChatClient`) + OpenAI API (gpt-4o-mini) |
 | Build | Maven 3.9 (wrapper incluso) |
 
@@ -529,15 +529,31 @@ src/main/java/com/extratoPopular/
 
 # Um método específico
 ./mvnw test -Dtest=AuthControllerIntegrationTest#deve_retornar201_quando_registrarComDadosValidos
+
+# Relatório de cobertura JaCoCo (gerado automaticamente junto com os testes)
+# Resultado em: target/site/jacoco/index.html
 ```
 
-**242 testes · 0 falhas · BUILD SUCCESS**
+**297 testes · 0 falhas · BUILD SUCCESS**
+
+### Cobertura (JaCoCo)
+
+| Métrica | Cobertura |
+|---------|-----------|
+| Linhas | **95.2%** (942 / 990) |
+| Instruções | **94.8%** (4374 / 4615) |
+| Branches | **82.9%** (189 / 228) |
+| Métodos | **87.6%** (289 / 330) |
+
+### Suíte de testes
 
 | Classe de teste | Testes | Tipo |
 |----------------|--------|------|
 | `CategorizacaoServiceTest` | 52 | Unitário |
+| `OtimizacaoStrategiesTest` | 23 | Unitário |
 | `CsvParserTest` | 16 | Unitário |
 | `OfxParserTest` | 15 | Unitário |
+| `GlobalExceptionHandlerTest` | 13 | Unitário |
 | `OrcamentoControllerIntegrationTest` | 13 | Integração |
 | `FinancialContextServiceImplTest` | 12 | Unitário |
 | `IngestaoTransacoesUseCaseTest` | 12 | Unitário |
@@ -553,11 +569,16 @@ src/main/java/com/extratoPopular/
 | `ChatRelatorioControllerIntegrationTest` | 7 | Integração |
 | `HashServiceTest` | 6 | Unitário |
 | `TransacaoControllerIntegrationTest` | 6 | Integração |
+| `SecurityUtilsTest` | 5 | Unitário |
 | `AiControllerIntegrationTest` | 5 | Integração |
 | `ChatServiceTest` | 5 | Unitário |
 | `RelatorioServiceTest` | 5 | Unitário |
 | `AiIntegrationExceptionTest` | 4 | Unitário |
+| `ContextoFinanceiroServiceTest` | 4 | Unitário |
+| `OpenAiClientRecordsTest` | 4 | Unitário |
+| `TransacaoDuplicadaExceptionTest` | 4 | Unitário |
 | `LoginUserUseCaseTest` | 3 | Unitário |
+| `OtimizacaoResponseTest` | 2 | Unitário |
 | `RegisterUserUseCaseTest` | 2 | Unitário |
 
 ---
